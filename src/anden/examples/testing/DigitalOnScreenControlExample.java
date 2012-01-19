@@ -85,7 +85,7 @@ private float fX,fY;
 
 	@Override
 	public Engine onLoadEngine() {
-		this.mCamera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, 10, 10, 1.0f);
+		this.mCamera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, 200, 200, 1.0f);
 		return new Engine(new EngineOptions(true, ScreenOrientation.LANDSCAPE, new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), this.mCamera));
 	}
 
@@ -127,7 +127,7 @@ private float fX,fY;
 				
 				physicsHandler.setVelocity(pValueX * 200, pValueY * 200);
 				physicsHandler.setAcceleration(5.0f);
-				if(pValueX!=0)mCamera.setCenter(CAMERA_HEIGHT, CAMERA_WIDTH+1);
+				mCamera.setCenter(face.getX(),face.getY());
 				
 			}
 		});	
