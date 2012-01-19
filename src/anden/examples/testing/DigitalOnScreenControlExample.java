@@ -12,6 +12,10 @@ import org.anddev.andengine.engine.handler.physics.PhysicsHandler;
 import org.anddev.andengine.engine.options.EngineOptions;
 import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
+import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
+import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
+import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.anddev.andengine.entity.scene.background.ColorBackground;
@@ -24,11 +28,13 @@ import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextur
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
+import org.anddev.andengine.util.Debug;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.view.MotionEvent;
+import android.widget.Toast;
 
 /**
  * (c) 2010 Nicolas Gramlich
@@ -60,7 +66,10 @@ public class DigitalOnScreenControlExample extends BaseGameActivity {
 	private TextureRegion mOnScreenControlKnobTextureRegion;
 
 	private DigitalOnScreenControl mDigitalOnScreenControl;
-private boolean flag=false;
+
+	private TMXTiledMap mTMXTiledMap;
+	
+	private boolean flag=false;
 private float fX,fY;
 	// ===========================================================
 	// Constructors
@@ -110,7 +119,7 @@ private float fX,fY;
 		final PhysicsHandler physicsHandler = new PhysicsHandler(face);
 		face.registerUpdateHandler(physicsHandler);
 	
-		scene.attachChild(face);
+	
 
 		this.mDigitalOnScreenControl = new DigitalOnScreenControl(0, CAMERA_HEIGHT - this.mOnScreenControlBaseTextureRegion.getHeight(), this.mCamera, this.mOnScreenControlBaseTextureRegion, this.mOnScreenControlKnobTextureRegion, 0.1f, new IOnScreenControlListener() {
 			@Override
@@ -118,11 +127,27 @@ private float fX,fY;
 				
 				physicsHandler.setVelocity(pValueX * 200, pValueY * 200);
 				physicsHandler.setAcceleration(5.0f);
-
+				if(pValueX!=0)mCamera.setCenter(CAMERA_HEIGHT, CAMERA_WIDTH+1);
 				
 			}
 		});	
+		//////////////////////////
 		
+		
+		try {
+			final TMXLoader mTMXLoader = new TMXLoader(this, this.mEngine.getTextureManager(), TextureOptions.BILINEAR_PREMULTIPLYALPHA, null);
+				
+			this.mTMXTiledMap = mTMXLoader.loadFromAsset(this, "gfx/desert.tmx");
+
+			//Toast.makeText(this, "Well,atleast the TMX loads... " ,Toast.LENGTH_LONG).show();
+		} catch (final TMXLoadException tmxle) {
+			Debug.e(tmxle);
+		}
+		final TMXLayer mTMXLayer = this.mTMXTiledMap.getTMXLayers().get(0);
+		
+		scene.attachChild(mTMXLayer);
+		scene.attachChild(face);
+		/////////////////////////
 		this.mDigitalOnScreenControl.getControlBase().setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
 		this.mDigitalOnScreenControl.getControlBase().setAlpha(0.5f);
 		this.mDigitalOnScreenControl.getControlBase().setScaleCenter(0, 128);
