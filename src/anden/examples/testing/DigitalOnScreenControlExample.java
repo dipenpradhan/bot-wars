@@ -10,7 +10,9 @@ import org.anddev.andengine.audio.sound.Sound;
 import org.anddev.andengine.audio.sound.SoundFactory;
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.SmoothCamera;
+import org.anddev.andengine.engine.camera.hud.controls.AnalogOnScreenControl;
 import org.anddev.andengine.engine.camera.hud.controls.BaseOnScreenControl;
+import org.anddev.andengine.engine.camera.hud.controls.AnalogOnScreenControl.IAnalogOnScreenControlListener;
 import org.anddev.andengine.engine.camera.hud.controls.BaseOnScreenControl.IOnScreenControlListener;
 import org.anddev.andengine.engine.camera.hud.controls.DigitalOnScreenControl;
 import org.anddev.andengine.engine.handler.collision.CollisionHandler;
@@ -23,6 +25,8 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
+import org.anddev.andengine.entity.modifier.ScaleModifier;
+import org.anddev.andengine.entity.modifier.SequenceEntityModifier;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.background.ColorBackground;
 import org.anddev.andengine.entity.shape.IShape;
@@ -110,11 +114,13 @@ private float fX=800,fY=480;
 		this.mOnScreenControlBaseTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mOnScreenControlTexture, this, "onscreen_control_base.png", 0, 0);
 		this.mOnScreenControlKnobTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mOnScreenControlTexture, this, "onscreen_control_knob.png", 128, 0);
 
+
+		
 		this.mEngine.getTextureManager().loadTextures(this.mBitmapTextureAtlas, this.mOnScreenControlTexture);
 		
 		
 		try {
-			mMusic = MusicFactory.createMusicFromAsset(this.mEngine.getMusicManager(), this, "wagner_the_ride_of_the_valkyries.ogg");
+			mMusic = MusicFactory.createMusicFromAsset(this.mEngine.getMusicManager(), this, "bg_music.mid");
 			mMusic.setLooping(true);
 		} catch (final IOException e) {
 			Debug.e(e);
@@ -171,6 +177,7 @@ private float fX=800,fY=480;
 		final CollisionHandler collisionHandler=new CollisionHandler(this, face, banana);
 		//face.registerUpdateHandler(collisionHandler);
 		//banana.registerUpdateHandler(collisionHandler);
+	
 		this.mDigitalOnScreenControl = new DigitalOnScreenControl(0, CAMERA_HEIGHT - this.mOnScreenControlBaseTextureRegion.getHeight(), this.mCamera, this.mOnScreenControlBaseTextureRegion, this.mOnScreenControlKnobTextureRegion, 0.1f, new IOnScreenControlListener() {
 			@Override
 			public void onControlChange(final BaseOnScreenControl pBaseOnScreenControl, final float pValueX, final float pValueY) {
@@ -203,7 +210,7 @@ private float fX=800,fY=480;
 		this.mDigitalOnScreenControl.getControlKnob().setScale(1.25f);
 		this.mDigitalOnScreenControl.getControlKnob().setAlpha(0.7f);
 		this.mDigitalOnScreenControl.refreshControlKnobPosition();
-
+		this.mDigitalOnScreenControl.setAllowDiagonal(true);
 		scene.setChildScene(this.mDigitalOnScreenControl);
 
 		return scene;
@@ -222,9 +229,10 @@ private float fX=800,fY=480;
 	}*/
 	@Override
 	public void onLoadComplete() {
-		this.showDialog(DIALOG_ALLOWDIAGONAL_ID);
+	//	this.showDialog(DIALOG_ALLOWDIAGONAL_ID);
+		
 	}
-
+/*
 	@Override
 	protected Dialog onCreateDialog(final int pID) {
 		switch(pID) {
@@ -248,7 +256,7 @@ private float fX=800,fY=480;
 		}
 		return super.onCreateDialog(pID);
 	}
-
+*/
 	@Override
 	public boolean onCollision(IShape pCheckShape, IShape pTargetShape) {
 		Toast.makeText(this, "BOOM " ,Toast.LENGTH_LONG).show();
