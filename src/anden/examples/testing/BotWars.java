@@ -95,8 +95,7 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	private Sound mSound;
 	private boolean isLanded = false;
 	private float fX = 800, fY = 480;
-	private Body mBody;
-	
+
 	private Scene mScene;
 	private PhysicsWorld mPhysicsWorld;
 	private FixtureDef boxFixtureDef;
@@ -241,14 +240,41 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
         
 		
 		final FixtureDef mFaceFixtureDef  = PhysicsFactory.createFixtureDef(0, 0f,0f);
-        mBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, face, BodyType.DynamicBody,mFaceFixtureDef);
+        final Body mBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, face, BodyType.DynamicBody,mFaceFixtureDef);
 		
 		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(face, mBody, true, false));
         
 		mScene.registerUpdateHandler(this.mPhysicsWorld);
    
 		
-
+		
+        
+        HUD mHUD=new HUD();
+        
+        
+        Sprite jump = new Sprite(CAMERA_WIDTH-128, CAMERA_HEIGHT - 128, mJumpTextureRegion){
+            @Override
+            public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY){
+            	if(pEvent.isActionDown()&&isLanded ){
+            		mBody.applyLinearImpulse(0, -7, mBody.getPosition().x, mBody.getPosition().y);
+            		mCamera.setZoomFactor(0.80f);
+            		}
+            	if(pEvent.isActionUp())mCamera.setZoomFactor(1.0f);
+            	//
+            	////////body.setLinearVelocity(new Vector2(body.getLinearVelocity().x,body.getLinearVelocity().y + CHAR_MOVING_SPEED)); // Don't look at there
+            	//body.applyLinearImpulse(0, -7, body.getPosition().x, body.getPosition().y);
+            	//}
+            	return false;
+            	
+                           }
+    
+        };
+        
+        //jump.setScale(0.3f);
+        mHUD.registerTouchArea(jump);
+        mHUD.attachChild(jump);
+//mScene.setChildScene(mHUD);
+mCamera.setHUD(mHUD);
 mScene.registerUpdateHandler(new IUpdateHandler(){
 
 	
@@ -365,10 +391,6 @@ this.mPhysicsWorld.setContactListener(new ContactListener(){
 		this.mDigitalOnScreenControl.setAllowDiagonal(false);
 		mScene.setChildScene(this.mDigitalOnScreenControl);
 
-		
-		
-		
-		
 		return mScene;
 	}
 
@@ -435,43 +457,6 @@ this.mPhysicsWorld.setContactListener(new ContactListener(){
          
 }
 	
-    
-    
-    
-    
-    private void initControls()
-    {
-		
-        
-        HUD mHUD=new HUD();
-        
-        
-        Sprite jump = new Sprite(CAMERA_WIDTH-128, CAMERA_HEIGHT - 128, mJumpTextureRegion){
-            @Override
-            public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY){
-            	if(pEvent.isActionDown()&&isLanded ){
-            		mBody.applyLinearImpulse(0, -7, mBody.getPosition().x, mBody.getPosition().y);
-            		mCamera.setZoomFactor(0.80f);
-            		}
-            	if(pEvent.isActionUp())mCamera.setZoomFactor(1.0f);
-            	//
-            	////////body.setLinearVelocity(new Vector2(body.getLinearVelocity().x,body.getLinearVelocity().y + CHAR_MOVING_SPEED)); // Don't look at there
-            	//body.applyLinearImpulse(0, -7, body.getPosition().x, body.getPosition().y);
-            	//}
-            	return false;
-            	
-                           }
-    
-        };
-        
-        //jump.setScale(0.3f);
-        mHUD.registerTouchArea(jump);
-        mHUD.attachChild(jump);
-//mScene.setChildScene(mHUD);
-mCamera.setHUD(mHUD);
-
-
-    }
 	
 	
 	// ===========================================================
