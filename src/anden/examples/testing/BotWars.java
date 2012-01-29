@@ -29,6 +29,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadExcepti
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.background.ColorBackground;
+import org.anddev.andengine.entity.scene.background.RepeatingSpriteBackground;
 import org.anddev.andengine.entity.shape.IShape;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
@@ -40,13 +41,17 @@ import org.anddev.andengine.input.touch.TouchEvent;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.anddev.andengine.opengl.texture.atlas.bitmap.source.AssetBitmapTextureAtlasSource;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
 
 import android.hardware.SensorManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
+
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -96,12 +101,12 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	private boolean isLanded = false;
 	private float fX = 800, fY = 480;
 	private Body mBody;
-
+	private RepeatingSpriteBackground mRepeatingSpriteBackground;
 	private Scene mScene;
 	private PhysicsWorld mPhysicsWorld;
 	private FixtureDef boxFixtureDef;
 	private AnimatedSprite face;
-
+	private long[] duration;
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -120,14 +125,6 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		this.mCamera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, 200,
 				200, 1.0f);
 
-		/*
-		 * return new Engine(new EngineOptions(true,
-		 * ScreenOrientation.LANDSCAPE, new RatioResolutionPolicy(CAMERA_WIDTH,
-		 * CAMERA_HEIGHT),
-		 * this.mCamera).setNeedsMusic(true).setNeedsSound(true).
-		 * getTouchOptions().setRunOnUpdateThread(true));
-		 */
-
 		final EngineOptions engineOptions = new EngineOptions(true,
 				ScreenOrientation.LANDSCAPE, new RatioResolutionPolicy(
 						CAMERA_WIDTH, CAMERA_HEIGHT), mCamera);
@@ -140,9 +137,14 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	@Override
 	public void onLoadResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+		
+		duration=new long[7];
+		for(int i=0;i<=6;i++){duration[i]=50;}
+		
 		MusicFactory.setAssetBasePath("mfx/");
 		SoundFactory.setAssetBasePath("mfx/");
-
+		
+		
 		loadCharacters();
 		loadControls();
 		loadSounds();
@@ -155,7 +157,9 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
 
 		mScene = new Scene();
-		mScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
+		
+		 mScene.setBackground(this.mRepeatingSpriteBackground);
+		//mScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
 
 		if (mMusic.isPlaying()) {
 			mMusic.pause();
@@ -173,12 +177,13 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		// this.mFaceTextureRegion.getWidth()) / 2;
 		// final int centerY = (CAMERA_HEIGHT -
 		// this.mFaceTextureRegion.getHeight()) / 2;
-		face = new AnimatedSprite(40, 0,
+		face = new AnimatedSprite(0, 20,
 		// mTMXLayer.getWidth() / 2, mTMXLayer.getHeight() / 2,
 				this.mFaceTextureRegion);
 
 		final AnimatedSprite banana = new AnimatedSprite(
-				mTMXLayer.getWidth() / 2 + 100, mTMXLayer.getHeight() / 2,
+				//mTMXLayer.getWidth() / 2 + 100, mTMXLayer.getHeight() / 2,
+				2000,0,
 				this.mBananaTextureRegion);
 		banana.animate(100);
 		// face.animate(100);
@@ -196,6 +201,14 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 
 		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(face,
 				mBody, true, false));
+		
+		final FixtureDef mBananaFixtureDef = PhysicsFactory.createFixtureDef(0,
+				0f, 0f);
+		final Body mBananaBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, banana,
+				BodyType.DynamicBody, mBananaFixtureDef);
+
+		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(banana,
+				mBananaBody, true, false));
 
 		mScene.registerUpdateHandler(this.mPhysicsWorld);
 
@@ -229,6 +242,9 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		mScene.registerUpdateHandler(new IUpdateHandler() {
 
 			public void onUpdate(float pSecondsElapsed) {
+				if(face.collidesWith(banana)){
+					mScene.detachChild(banana);
+				}
 				mCamera.setCenter(face.getX(), face.getY());
 
 			}
@@ -313,10 +329,10 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 				boxFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 1f);
 				PhysicsFactory.createBoxBody(this.mPhysicsWorld, rect,
 						BodyType.StaticBody, boxFixtureDef);
-				rect.setVisible(true);
+				rect.setVisible(false);
 				mScene.attachChild(rect);
 			}
-			// }
+		
 		}
 
 	}
@@ -330,19 +346,12 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 			@Override
 			public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY) {
 				if (pEvent.isActionDown() && isLanded) {
-					mBody.applyLinearImpulse(0, -7, mBody.getPosition().x,
-							mBody.getPosition().y);
+					mBody.applyLinearImpulse(0, -14, mBody.getPosition().x,		///////JUMP
+							mBody.getPosition().y);								
 					mCamera.setZoomFactor(0.80f);
 				}
 				if (pEvent.isActionUp())
 					mCamera.setZoomFactor(1.0f);
-				//
-				// //////body.setLinearVelocity(new
-				// Vector2(body.getLinearVelocity().x,body.getLinearVelocity().y
-				// + CHAR_MOVING_SPEED)); // Don't look at there
-				// body.applyLinearImpulse(0, -7, body.getPosition().x,
-				// body.getPosition().y);
-				// }
 				return false;
 
 			}
@@ -352,7 +361,7 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		// jump.setScale(0.3f);
 		mHUD.registerTouchArea(jump);
 		mHUD.attachChild(jump);
-		// mScene.setChildScene(mHUD);
+	
 		mCamera.setHUD(mHUD);
 
 		// /////////////////////////////////////////////////////////////////////////////////////
@@ -373,21 +382,28 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 						// 200);
 
 						if (pValueX > 0 && !face.isAnimationRunning()
-								&& isLanded) {
+								) {
 							face.getTextureRegion().setFlippedHorizontal(false);
-							mBody.setLinearVelocity(4f,
+							mBody.setLinearVelocity(8f,
 									mBody.getLinearVelocity().y);
-							face.animate(30, false);
+							
+							face.animate(duration, 0, 6, false);
+							//(30, false);
 							mSound.play();
 						}
-						// onCollision(face, banana);
+						
 						else if (pValueX < 0 && !face.isAnimationRunning()
-								&& isLanded) {
+								) {
 							face.getTextureRegion().setFlippedHorizontal(true);
-							mBody.setLinearVelocity(-4f,
+							mBody.setLinearVelocity(-8f,
 									mBody.getLinearVelocity().y);
-							face.animate(30, false);
+							face.animate(duration, 0, 6, false);
+							//face.animate(30, false);
 							mSound.play();
+						}
+						else if(pValueX==0){
+							mBody.setLinearVelocity(0f,
+									mBody.getLinearVelocity().y);
 						}
 						// else face.stopAnimation();
 						// mCamera.setCenter(face.getX(), face.getY());
@@ -408,14 +424,14 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	}
 
 	public void loadMap() {
-
+		this.mRepeatingSpriteBackground = new RepeatingSpriteBackground(CAMERA_WIDTH, CAMERA_HEIGHT, this.mEngine.getTextureManager(), new AssetBitmapTextureAtlasSource(this, "gfx/background_island.png"),1.0f);
 		try {
 			final TMXLoader mTMXLoader = new TMXLoader(this,
 					this.mEngine.getTextureManager(),
 					TextureOptions.BILINEAR_PREMULTIPLYALPHA, null);
 
 			this.mTMXTiledMap = mTMXLoader.loadFromAsset(this,
-					"gfx/desert2.tmx");
+					"tmx/map.tmx");
 
 			// Toast.makeText(this, "Well,atleast the TMX loads... "
 			// ,Toast.LENGTH_LONG).show();
@@ -429,13 +445,16 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(512, 256,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 
-		this.mFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
-						"snapdragon_tiled.png", 0, 0, 4, 3);
+	//	this.mFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory
+	//			.createTiledFromAsset(this.mBitmapTextureAtlas, this,
+	//					"snapdragon_tiled32.png", 0, 0, 4, 3);
 
+		
+		this.mFaceTextureRegion= BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "andrun256.png",0,0, 8, 1);
+		
 		this.mBananaTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
-						"banana_tiled.png", 0, 180, 4, 2);
+						"banana_tiled.png", 0, 64, 4, 2);
 	}
 
 	private void loadControls() {
@@ -470,13 +489,45 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 			mMusic.setLooping(true);
 
 			mSound = SoundFactory.createSoundFromAsset(
-					this.mEngine.getSoundManager(), this, "explosion.ogg");
+					this.mEngine.getSoundManager(), this, "fire_alarm4.wav");
 
 		} catch (final IOException e) {
 			Debug.e(e);
 		}
 
 	}
+	
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// TODO Auto-generated method stub
+		super.onCreateOptionsMenu(menu);
+		menu.add(0, 0, 0,"Exit");
+		//menu.add(0, 1, 0, R.string.menu_resume);
+//		menu.add(0, 2, 0, R.string.menu_return);
+	//	menu.add(0, 3, 0, R.string.menu_exit);
+		Toast.makeText(this, "Options", 100).show();
+		return true;
+
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// TODO Auto-generated method stub
+		super.onOptionsItemSelected(item);
+		{
+
+			if (item.getItemId() == 0) {// exit
+				
+				Toast.makeText(this, "Exit", 100).show();
+				System.exit(0);
+				
+
+			} 
+		}return true;
+	}
+		
+
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================

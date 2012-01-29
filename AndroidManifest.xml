@@ -11,7 +11,7 @@
         android:icon="@drawable/bot_img_1"
         android:label="@string/app_name" >
          <activity
-            android:name=".BotWars"
+            android:name=".SplashScreen"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,7 +19,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-    </application>
-
+        <activity android:name="BotWars">
+ <intent-filter>
+ <category android:name="android.intent.action.DEFAULT"/>
+ </intent-filter>
+ </activity>
+    
+<activity android:name="StartMenu">
+ <intent-filter>
+ <category android:name="android.intent.action.DEFAULT"/>
+ </intent-filter>
+ </activity>
+ </application>
 </manifest>

@@ -4,4 +4,15 @@
     <string name="hello">Hello World!</string>
     <string name="app_name">Bot Wars</string>
 
+	<string name="menu_resume">Resume Game</string>
+	<string name="menu_pause">Pause Game</string>
+	<string name="menu_return">Return to Main Menu</string>
+	<string name="menu_exit">Exit</string>
+	<string name="startmenu_details">\n\t\t\t\t\t\t\t\t\tMAIN MENU\n\n
+		</string>
+	<string name="spacer">\n
+		</string>
+	<string name="startmenu_startbutton">START!</string>
+	<string name="startmenu_exitbutton">Exit</string>
+    
 </resources>

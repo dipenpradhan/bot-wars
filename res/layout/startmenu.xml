@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView  android:id="@+id/startmenu_text"
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" 
+    android:text="@string/startmenu_details"
+    />
+<Button android:id="@+id/startmenu_startbutton"
+
+	android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/startmenu_startbutton" 
+     android:onClick="startGame" 
+    />
+    <TextView  android:id="@+id/spacer"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="@string/spacer"
+    />
+<Button android:id="@+id/startmenu_exitbutton"
+
+	android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/startmenu_exitbutton" 
+    android:onClick="exit"
+    />
+        
+</LinearLayout>
