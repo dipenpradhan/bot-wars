@@ -29,7 +29,7 @@
   <object x="765" y="550" width="63" height="20"/>
   <object x="836" y="580" width="152" height="19"/>
   <object x="996" y="552" width="25" height="31"/>
-  <object x="1094" y="480" width="24" height="186"/>
+  <object x="1198" y="392" width="8" height="198"/>
   <object x="969" y="680" width="70" height="15"/>
   <object x="834" y="707" width="127" height="16"/>
   <object x="738" y="725" width="98" height="15"/>
@@ -37,10 +37,10 @@
   <object x="307" y="556" width="1"/>
   <object x="332" y="487" width="21" height="87"/>
   <object x="220" y="503" width="23" height="69"/>
-  <object x="707" y="373" width="87" height="28"/>
+  <object x="711" y="357" width="499" height="6"/>
   <object x="967" y="444" width="105" height="29"/>
   <object x="865" y="468" width="92" height="29"/>
-  <object x="813" y="389" width="31" height="56"/>
+  <object x="813" y="401" width="31" height="56"/>
   <object x="21" y="692" width="680" height="10"/>
   <object x="1057" y="741" width="149" height="17"/>
   <object x="1293" y="711" width="68" height="21"/>
@@ -64,5 +64,6 @@
   <object x="2182" y="1216" width="1898" height="18"/>
   <object x="3984" y="928" width="48" height="336"/>
   <object x="2156" y="966" width="14" height="282"/>
+  <object x="1100" y="498" width="68" height="96"/>
  </objectgroup>
 </map>

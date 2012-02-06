@@ -47,11 +47,12 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
 
+import android.content.Intent;
 import android.hardware.SensorManager;
+import android.media.ExifInterface;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -59,6 +60,8 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.Filter;
+import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
 
@@ -68,25 +71,39 @@ import com.badlogic.gdx.physics.box2d.Manifold;
  * @author Nicolas Gramlich
  * @since 00:06:23 - 11.07.2010
  */
-public class BotWars extends BaseGameActivity implements ICollisionCallback {
+public class BotWars extends BaseGameActivity {
 	// ===========================================================
 	// Constants
 	// ===========================================================
 
 	private static final int CAMERA_WIDTH = 800;
 	private static final int CAMERA_HEIGHT = 480;
-	private static final int DIALOG_ALLOWDIAGONAL_ID = 0;
-
+	public static final short CATEGORYBIT_WALL = 1;
+	public static final short CATEGORYBIT_PLAYER = 2;
+	public static final short CATEGORYBIT_ENEMY = 4;
+	public static final short CATEGORYBIT_BULLET = 8;
+	public static final short MASKBITS_WALL = CATEGORYBIT_WALL
+			+ CATEGORYBIT_PLAYER + CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET;
+	public static final short MASKBITS_PLAYER = CATEGORYBIT_WALL
+			+ CATEGORYBIT_PLAYER + CATEGORYBIT_BULLET;
+	public static final short MASKBITS_ENEMY = CATEGORYBIT_WALL
+			+ CATEGORYBIT_BULLET + CATEGORYBIT_ENEMY;
+	public static final short MASKBITS_BULLET = CATEGORYBIT_WALL
+			+ CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET + CATEGORYBIT_PLAYER;
 	// ===========================================================
 	// Fields
 	// ===========================================================
-
+	private int bulletCount=0;
 	private SmoothCamera mCamera;
 
 	private BitmapTextureAtlas mBitmapTextureAtlas;
-	private TiledTextureRegion mFaceTextureRegion;
-	private TiledTextureRegion mBananaTextureRegion;
+	private TiledTextureRegion mPlayerTextureRegion;
+	private TiledTextureRegion mEnemyTextureRegion;
 
+	private BitmapTextureAtlas mBulletTextureAtlas;
+	private TiledTextureRegion mBulletTextureRegion;
+
+	
 	private BitmapTextureAtlas mOnScreenControlTexture;
 	private TextureRegion mOnScreenControlBaseTextureRegion;
 	private TextureRegion mOnScreenControlKnobTextureRegion;
@@ -99,14 +116,23 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	private Music mMusic;
 	private Sound mSound;
 	private boolean isLanded = false;
-	private float fX = 800, fY = 480;
-	private Body mBody;
+	private Body mPlayerBody;
 	private RepeatingSpriteBackground mRepeatingSpriteBackground;
 	private Scene mScene;
 	private PhysicsWorld mPhysicsWorld;
 	private FixtureDef boxFixtureDef;
-	private AnimatedSprite face;
+	private AnimatedSprite mPlayerSprite;
 	private long[] duration;
+
+	private static float mImpulseY = 14f;
+	private static float mLinearVelocityX = 8.0f;
+
+	private static String mapName = "tmx/map_1.tmx";
+	private static String mapBG = "tmx/scn_sunny.png";
+	private String fix1_name="",fix2_name="";
+	private static int mapOffset = 100;
+private boolean deleteEnemy=false;
+	private boolean deleteBullet=false;
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -137,14 +163,15 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	@Override
 	public void onLoadResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-		
-		duration=new long[7];
-		for(int i=0;i<=6;i++){duration[i]=50;}
-		
+
+		duration = new long[7];
+		for (int i = 0; i <= 6; i++) {
+			duration[i] = 50;
+		}
+
 		MusicFactory.setAssetBasePath("mfx/");
 		SoundFactory.setAssetBasePath("mfx/");
-		
-		
+
 		loadCharacters();
 		loadControls();
 		loadSounds();
@@ -157,64 +184,98 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
 
 		mScene = new Scene();
-		
-		 mScene.setBackground(this.mRepeatingSpriteBackground);
-		//mScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
+
+		mScene.setBackground(this.mRepeatingSpriteBackground);
 
 		if (mMusic.isPlaying()) {
 			mMusic.pause();
 		} else {// mMusic.setVolume(0.1f);
 			mMusic.play();
 		}
-		
+
 		final TMXLayer mTMXLayer = this.mTMXTiledMap.getTMXLayers().get(0);
-		// final TMXLayer mTMXLayer1 = this.mTMXTiledMap.getTMXLayers().get(1);
 
-		// mCamera.setCenter(mTMXLayer.getWidth() / 2, mTMXLayer.getHeight() /
-		// 2);
+		mPlayerSprite = new AnimatedSprite(mapOffset, 0, this.mPlayerTextureRegion);
 
-		// final int centerX = (CAMERA_WIDTH -
-		// this.mFaceTextureRegion.getWidth()) / 2;
-		// final int centerY = (CAMERA_HEIGHT -
-		// this.mFaceTextureRegion.getHeight()) / 2;
-		face = new AnimatedSprite(0, 20,
-		// mTMXLayer.getWidth() / 2, mTMXLayer.getHeight() / 2,
-				this.mFaceTextureRegion);
+		final AnimatedSprite mEnemySprite = new AnimatedSprite(mapOffset + 400, 0,
+				this.mEnemyTextureRegion);
+		mEnemySprite.animate(100);
 
-		final AnimatedSprite banana = new AnimatedSprite(
-				//mTMXLayer.getWidth() / 2 + 100, mTMXLayer.getHeight() / 2,
-				2000,0,
-				this.mBananaTextureRegion);
-		banana.animate(100);
-		// face.animate(100);
-
-		// final PhysicsHandler physicsHandler = new PhysicsHandler(face);
-		// face.registerUpdateHandler(physicsHandler);
+		//final AnimatedSprite mBulletSprite = new AnimatedSprite(mapOffset + 100, 0,this.mBulletTextureRegion);
 
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0,
 				SensorManager.GRAVITY_EARTH), false);
 
-		final FixtureDef mFaceFixtureDef = PhysicsFactory.createFixtureDef(0,
-				0f, 0f);
-		mBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, face,
-				BodyType.DynamicBody, mFaceFixtureDef);
+		final FixtureDef mPlayerFixtureDef = PhysicsFactory.createFixtureDef(0,
+				0f, 0f, false, CATEGORYBIT_PLAYER, MASKBITS_PLAYER, (short) 0);
 
-		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(face,
-				mBody, true, false));
-		
-		final FixtureDef mBananaFixtureDef = PhysicsFactory.createFixtureDef(0,
-				0f, 0f);
-		final Body mBananaBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, banana,
-				BodyType.DynamicBody, mBananaFixtureDef);
+		mPlayerBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, mPlayerSprite,
+				BodyType.DynamicBody, mPlayerFixtureDef);
+		mPlayerBody.setUserData("player");
+		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(mPlayerSprite,
+				mPlayerBody, true, false));
 
-		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(banana,
-				mBananaBody, true, false));
+		final FixtureDef mEnemyFixtureDef = PhysicsFactory.createFixtureDef(0,
+				0f, 0f, false, CATEGORYBIT_ENEMY, MASKBITS_ENEMY, (short) 0);
+		final Body mEnemyBody = PhysicsFactory.createBoxBody(
+				this.mPhysicsWorld, mEnemySprite, BodyType.DynamicBody,
+				mEnemyFixtureDef);
+		mEnemyBody.setUserData("enemy");
 
+		final PhysicsConnector mEnemyPhysicsConnector = new PhysicsConnector(
+				mEnemySprite, mEnemyBody, true, false);
+		this.mPhysicsWorld.registerPhysicsConnector(mEnemyPhysicsConnector);
+
+/*		final FixtureDef mBulletFixtureDef = PhysicsFactory.createFixtureDef(0,
+				0f, 0f, false, CATEGORYBIT_BULLET, MASKBITS_BULLET, (short) 0);
+		final Body mBulletBody = PhysicsFactory.createCircleBody(
+				this.mPhysicsWorld, mBulletSprite, BodyType.DynamicBody,
+				mBulletFixtureDef);
+		mBulletBody.setUserData("bullet");
+
+		final PhysicsConnector mBulletPhysicsConnector = new PhysicsConnector(
+				mBulletSprite, mBulletBody, true, false);
+		this.mPhysicsWorld.registerPhysicsConnector(mBulletPhysicsConnector);
+*/
 		mScene.registerUpdateHandler(this.mPhysicsWorld);
 
 		this.mPhysicsWorld.setContactListener(new ContactListener() {
 
 			public void beginContact(Contact contact) {
+
+				Fixture fix1 = contact.getFixtureA();
+				Fixture fix2 = contact.getFixtureB();
+				if (fix1.getBody().getUserData() != null
+						&& fix2.getBody().getUserData() != null) {
+					
+					fix1_name=fix1.getBody().getUserData().toString();
+					fix2_name=fix2.getBody().getUserData().toString();
+
+					if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name.equalsIgnoreCase("enemy"))
+							|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name.equalsIgnoreCase("enemy"))) deleteEnemy=true;
+					//else deleteEnemy=false;
+					if ((fix1_name.equalsIgnoreCase("bullet"))
+							|| (fix2_name.equalsIgnoreCase("bullet"))) deleteBullet=true;
+					else deleteBullet=false;
+					
+					//if ((fix1_name.equalsIgnoreCase("mBulletSprite") && fix2_name.equalsIgnoreCase("enemy"))
+					//		|| (fix2_name.equalsIgnoreCase("mBulletSprite") && fix1_name.equalsIgnoreCase("enemy"))) {
+						
+					//	mPhysicsWorld.unregisterPhysicsConnector(mEnemyPhysicsConnector);
+						//mPhysicsWorld.destroyBody(mEnemyPhysicsConnector.getBody());
+
+					//	mScene.detachChild(mEnemySprite);	
+					//}
+
+				}else {fix1_name="";fix2_name="";}
+				
+
+				// {Toast.makeText(BotWars.this,
+				// fix1.getBody().getUserData().toString(),
+				// Toast.LENGTH_SHORT);}
+				// if(fix1.getBody().getUserData().equals("mBulletSprite") &&
+				// fix2.getBody().getUserData().equals("enemy")){Toast.makeText(BotWars.this,
+				// "hit",Toast.LENGTH_SHORT ).show();}
 
 				isLanded = true;
 				Debug.d("BeginContact");
@@ -242,10 +303,40 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		mScene.registerUpdateHandler(new IUpdateHandler() {
 
 			public void onUpdate(float pSecondsElapsed) {
-				if(face.collidesWith(banana)){
-					mScene.detachChild(banana);
-				}
-				mCamera.setCenter(face.getX(), face.getY());
+				// if(mPlayerSprite.collidesWith(mEnemySprite)){
+			
+				if ((fix1_name.contains("bullet") && fix2_name.equalsIgnoreCase("enemy"))
+						|| (fix2_name.contains("bullet") && fix1_name.equalsIgnoreCase("enemy"))){
+						
+						Debug.d("HIT HIT HIT");
+						mPhysicsWorld.destroyBody(mEnemyPhysicsConnector.getBody());
+						mPhysicsWorld.unregisterPhysicsConnector(mEnemyPhysicsConnector);
+						mScene.detachChild(mEnemySprite);	
+						
+						//PhysicsConnector mBulletPhysicsConnector = mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mBulletSprite);
+						//mPhysicsWorld.unregisterPhysicsConnector(mBulletPhysicsConnector);
+					//mPhysicsWorld.destroyBody(mBulletPhysicsConnector.getBody());
+
+						//mScene.detachChild(mBulletSprite);	
+}
+//if(deleteBullet){
+				if ((fix1_name.contains("bullet") && fix1_name.contains("2"))
+						|| (fix2_name.contains("bullet") &&fix2_name.contains("2"))){
+						
+					PhysicsConnector mBulletPhysicsConnector = mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mBulletSprite);
+					mPhysicsWorld.unregisterPhysicsConnector(mBulletPhysicsConnector);
+					mPhysicsWorld.destroyBody(mBulletPhysicsConnector.getBody());
+					mScene.detachChild(mBulletSprite);	}
+
+				// mPhysicsWorld.unregisterPhysicsConnector(mEnemyPhysicsConnector);
+				// mPhysicsWorld.destroyBody(mEnemyPhysicsConnector.getBody());
+
+				// mScene.detachChild(mEnemySprite);
+
+				// }
+				// if(isLanded)mEnemyBody.setLinearVelocity(5, 0);else
+				// mEnemyBody.setLinearVelocity(0,0);
+				mCamera.setCenter(mPlayerSprite.getX(), mPlayerSprite.getY());
 
 			}
 
@@ -256,15 +347,16 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		});
 
 		// final CollisionHandler collisionHandler = new CollisionHandler(this,
-		// face, banana);
-		// face.registerUpdateHandler(collisionHandler);
-		// banana.registerUpdateHandler(collisionHandler);
+		// mPlayerSprite, mEnemySprite);
+		// mPlayerSprite.registerUpdateHandler(collisionHandler);
+		// mEnemySprite.registerUpdateHandler(collisionHandler);
 
 		// ////////////////////////
 		initControls();
 		mScene.attachChild(mTMXLayer);
-		mScene.attachChild(banana);
-		mScene.attachChild(face);
+		mScene.attachChild(mEnemySprite);
+		//mScene.attachChild(mBulletSprite);
+		mScene.attachChild(mPlayerSprite);
 		createUnwalkableObjects(mTMXTiledMap);
 		// ///////////////////////
 
@@ -302,11 +394,6 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	 * pWhich) { BotWars.this.mDigitalOnScreenControl.setAllowDiagonal(false); }
 	 * }) .create(); } return super.onCreateDialog(pID); }
 	 */
-	@Override
-	public boolean onCollision(IShape pCheckShape, IShape pTargetShape) {
-		Toast.makeText(this, "BOOM ", Toast.LENGTH_LONG).show();
-		return true;
-	}
 
 	// ===========================================================
 	// Methods
@@ -325,14 +412,16 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 
 				final Rectangle rect = new Rectangle(object.getX(),
 						object.getY(), object.getWidth(), object.getHeight());
-				Debug.d("aaaaaaaaaaaaaaaaaaa" + rect);
-				boxFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 1f);
+				// Debug.d("aaaaaaaaaaaaaaaaaaa" + rect);
+				boxFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 1f,
+						false, CATEGORYBIT_WALL, MASKBITS_WALL, (short) 0);
 				PhysicsFactory.createBoxBody(this.mPhysicsWorld, rect,
 						BodyType.StaticBody, boxFixtureDef);
+
 				rect.setVisible(false);
 				mScene.attachChild(rect);
 			}
-		
+
 		}
 
 	}
@@ -346,8 +435,9 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 			@Override
 			public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY) {
 				if (pEvent.isActionDown() && isLanded) {
-					mBody.applyLinearImpulse(0, -14, mBody.getPosition().x,		///////JUMP
-							mBody.getPosition().y);								
+					mPlayerBody.applyLinearImpulse(0, -mImpulseY,
+							mPlayerBody.getPosition().x, // /////JUMP
+							mPlayerBody.getPosition().y);
 					mCamera.setZoomFactor(0.80f);
 				}
 				if (pEvent.isActionUp())
@@ -357,11 +447,27 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 			}
 
 		};
+		Sprite shoot = new Sprite(CAMERA_WIDTH - 128, CAMERA_HEIGHT - 256,
+				mJumpTextureRegion) {
+			@Override
+			public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY) {
+				if (pEvent.isActionDown()) {
+					spawnBullet();
+					
+				}
+				if (pEvent.isActionUp())
+					mCamera.setZoomFactor(1.0f);
+				return false;
 
+			}
+
+		};
+		mHUD.registerTouchArea(shoot);
+		mHUD.attachChild(shoot);
 		// jump.setScale(0.3f);
 		mHUD.registerTouchArea(jump);
 		mHUD.attachChild(jump);
-	
+
 		mCamera.setHUD(mHUD);
 
 		// /////////////////////////////////////////////////////////////////////////////////////
@@ -381,32 +487,30 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 						// physicsHandler.setVelocity(pValueX * 200, pValueY *
 						// 200);
 
-						if (pValueX > 0 && !face.isAnimationRunning()
-								) {
-							face.getTextureRegion().setFlippedHorizontal(false);
-							mBody.setLinearVelocity(8f,
-									mBody.getLinearVelocity().y);
-							
-							face.animate(duration, 0, 6, false);
-							//(30, false);
+						if (pValueX > 0 && !mPlayerSprite.isAnimationRunning()) {
+							mPlayerSprite.getTextureRegion().setFlippedHorizontal(false);
+							mPlayerBody.setLinearVelocity(mLinearVelocityX,
+									mPlayerBody.getLinearVelocity().y);
+
+							mPlayerSprite.animate(duration, 0, 6, false);
+							// (30, false);
 							mSound.play();
 						}
-						
-						else if (pValueX < 0 && !face.isAnimationRunning()
-								) {
-							face.getTextureRegion().setFlippedHorizontal(true);
-							mBody.setLinearVelocity(-8f,
-									mBody.getLinearVelocity().y);
-							face.animate(duration, 0, 6, false);
-							//face.animate(30, false);
+
+						else if (pValueX < 0 && !mPlayerSprite.isAnimationRunning()) {
+							mPlayerSprite.getTextureRegion().setFlippedHorizontal(true);
+							mPlayerBody.setLinearVelocity(-mLinearVelocityX,
+									mPlayerBody.getLinearVelocity().y);
+							mPlayerSprite.animate(duration, 0, 6, false);
+							// mPlayerSprite.animate(30, false);
 							mSound.play();
+						} else if (pValueX == 0) {
+							mPlayerBody.setLinearVelocity(0f,
+									mPlayerBody.getLinearVelocity().y);
+
 						}
-						else if(pValueX==0){
-							mBody.setLinearVelocity(0f,
-									mBody.getLinearVelocity().y);
-						}
-						// else face.stopAnimation();
-						// mCamera.setCenter(face.getX(), face.getY());
+						// else mPlayerSprite.stopAnimation();
+						// mCamera.setCenter(mPlayerSprite.getX(), mPlayerSprite.getY());
 
 					}
 
@@ -424,14 +528,15 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	}
 
 	public void loadMap() {
-		this.mRepeatingSpriteBackground = new RepeatingSpriteBackground(CAMERA_WIDTH, CAMERA_HEIGHT, this.mEngine.getTextureManager(), new AssetBitmapTextureAtlasSource(this, "gfx/background_island.png"),1.0f);
+		this.mRepeatingSpriteBackground = new RepeatingSpriteBackground(
+				CAMERA_WIDTH, CAMERA_HEIGHT, this.mEngine.getTextureManager(),
+				new AssetBitmapTextureAtlasSource(this, mapBG), 1.0f);
 		try {
 			final TMXLoader mTMXLoader = new TMXLoader(this,
 					this.mEngine.getTextureManager(),
 					TextureOptions.BILINEAR_PREMULTIPLYALPHA, null);
 
-			this.mTMXTiledMap = mTMXLoader.loadFromAsset(this,
-					"tmx/map.tmx");
+			this.mTMXTiledMap = mTMXLoader.loadFromAsset(this, mapName);
 
 			// Toast.makeText(this, "Well,atleast the TMX loads... "
 			// ,Toast.LENGTH_LONG).show();
@@ -444,17 +549,24 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 	private void loadCharacters() {
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(512, 256,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-
-	//	this.mFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory
-	//			.createTiledFromAsset(this.mBitmapTextureAtlas, this,
-	//					"snapdragon_tiled32.png", 0, 0, 4, 3);
-
 		
-		this.mFaceTextureRegion= BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "andrun256.png",0,0, 8, 1);
-		
-		this.mBananaTextureRegion = BitmapTextureAtlasTextureRegionFactory
+		// this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
+		// .createTiledFromAsset(this.mBitmapTextureAtlas, this,
+		// "snapdragon_tiled32.png", 0, 0, 4, 3);
+
+		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
+						"andrun256.png", 0, 0, 8, 1);
+
+		this.mEnemyTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
 						"banana_tiled.png", 0, 64, 4, 2);
+	
+		//this.mBulletTextureAtlas=new BitmapTextureAtlas(32, 32, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		this.mBulletTextureRegion=BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
+						"bullet.png", 0, 128, 1, 1);
+		
 	}
 
 	private void loadControls() {
@@ -496,37 +608,127 @@ public class BotWars extends BaseGameActivity implements ICollisionCallback {
 		}
 
 	}
-	
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// TODO Auto-generated method stub
 		super.onCreateOptionsMenu(menu);
-		menu.add(0, 0, 0,"Exit");
-		//menu.add(0, 1, 0, R.string.menu_resume);
-//		menu.add(0, 2, 0, R.string.menu_return);
-	//	menu.add(0, 3, 0, R.string.menu_exit);
+		menu.add(0, 0, 0, R.string.menu_resume);
+		menu.add(0, 1, 0, R.string.menu_pause);
+		menu.add(0, 2, 0, R.string.menu_return);
+		menu.add(0, 3, 0, R.string.menu_exit);
+
 		Toast.makeText(this, "Options", 100).show();
 		return true;
 
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// TODO Auto-generated method stub
 		super.onOptionsItemSelected(item);
 		{
 
-			if (item.getItemId() == 0) {// exit
-				
+			if (item.getItemId() == 3) {// exit
+
 				Toast.makeText(this, "Exit", 100).show();
 				System.exit(0);
-				
 
-			} 
-		}return true;
+			}
+
+			else if (item.getItemId() == 0) {// resume
+				mEngine.start();
+				Toast.makeText(this, "Resume", 100).show();
+
+			} else if (item.getItemId() == 1) {// pause
+				mEngine.stop();
+				Toast.makeText(this, "Pause", 100).show();
+
+			}
+
+			else if (item.getItemId() == 2) {// return to main menu
+				// onDestroy();
+
+				Intent StartIntent = new Intent(BotWars.this, StartMenu.class);
+				startActivity(StartIntent);
+
+				finish();
+				Toast.makeText(this, "Main Menu", 100).show();
+
+			}
+
+		}
+		return true;
 	}
+	AnimatedSprite mBulletSprite;
+	
+	public void spawnBullet()
+	{bulletCount++;
+		mBulletSprite = new AnimatedSprite(mPlayerSprite.getX()+mPlayerSprite.getWidth(), mPlayerSprite.getY()+mPlayerSprite.getHeight()/4,mBulletTextureRegion);
+
+		FixtureDef mBulletFixtureDef = PhysicsFactory.createFixtureDef(0,
+				0f, 0f, false, CATEGORYBIT_BULLET, MASKBITS_BULLET, (short) 0);
 		
+		Body mBulletBody = PhysicsFactory.createCircleBody(
+				this.mPhysicsWorld, mBulletSprite, BodyType.DynamicBody,
+				mBulletFixtureDef);
+		mBulletBody.setUserData("bullet"+bulletCount);
+
+		final PhysicsConnector mBulletPhysicsConnector = new PhysicsConnector(
+				mBulletSprite, mBulletBody, true, false);
+		
+		mPhysicsWorld.registerPhysicsConnector(mBulletPhysicsConnector);
+		mBulletBody.setLinearVelocity(20, 0);
+		mCamera.setZoomFactor(0.80f);
+		mScene.attachChild(mBulletSprite);
+		
+		//if(mBulletBody!=null){mPhysicsWorld.unregisterPhysicsConnector(mBulletPhysicsConnector);
+		//mPhysicsWorld.destroyBody(mBulletPhysicsConnector.getBody());
+
+		//mScene.detachChild(mBulletSprite);
+	
+	}
+	
+	public static void setImpulse(String str) {
+		mImpulseY = Float.parseFloat(str);
+	}
+
+	public static void setVelocity(String str) {
+		mLinearVelocityX = Float.parseFloat(str);
+	}
+
+	public static void setMap(int mapID) {
+		if (mapID == 0) {
+			mapName = "tmx/map_1.tmx";
+			mapOffset = 20;
+		}
+		if (mapID == 1) {
+			mapName = "tmx/map_2.tmx";
+			mapOffset = 20;
+		}
+		if (mapID == 2) {
+			mapName = "tmx/map_3.tmx";
+			mapOffset = 100;
+		}
+	}
+
+	public static void setScene(int sceneID) {
+		if (sceneID == 0) {
+			mapBG = "tmx/scn_sunny.png";
+		}
+		if (sceneID == 1) {
+			mapBG = "tmx/scn_dark.png";
+		}
+		if (sceneID == 2) {
+			mapBG = "tmx/scn_island.png";
+		}
+		if (sceneID == 3) {
+			mapBG = "tmx/scn_underground.png";
+		}
+		if (sceneID == 4) {
+			mapBG = "tmx/scn_sunset.png";
+		}
+	}
 
 	// ===========================================================
 	// Inner and Anonymous Classes

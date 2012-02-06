@@ -1,18 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World!</string>
     <string name="app_name">Bot Wars</string>
+    <string name="menu_resume">Resume Game</string>
+    <string name="menu_pause">Pause Game</string>
+    <string name="menu_return">Return to Main Menu</string>
+    <string name="menu_exit">Exit</string>
+	<string name="menu_restart">Restart</string>
 
-	<string name="menu_resume">Resume Game</string>
-	<string name="menu_pause">Pause Game</string>
-	<string name="menu_return">Return to Main Menu</string>
-	<string name="menu_exit">Exit</string>
-	<string name="startmenu_details">\n\t\t\t\t\t\t\t\t\tMAIN MENU\n\n
-		</string>
-	<string name="spacer">\n
-		</string>
-	<string name="startmenu_startbutton">START!</string>
-	<string name="startmenu_exitbutton">Exit</string>
+    <string name="sm_toptext">Main Menu</string>
+    <string name="sm_veloc">Velocity</string>
+    <string name="sm_impul">Impulse</string>
+    <string name="sm_map">Map</string>
+    <string name="sm_start">Start Game</string>
+    <string name="sm_exit">Exit</string>
+    <string name="sm_mapprompt">Choose A Map</string>
+    <string name="sm_scene">Scene</string>
+    <string name="sm_sceneprompt">Choose A Scene</string>
     
+    
+    <string-array name="maps_array">
+        <item>Map 1</item>
+        <item>Map 2</item>
+        <item>Map 3</item>
+    </string-array>
+    <string-array name="scene_array">
+        <item>Sunny</item>
+        <item>Dark</item>
+        <item>Island</item>
+        <item>Underground</item>
+    </string-array>
+
+
 </resources>
