@@ -1,0 +1,101 @@
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/relativeLayout1"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+
+        <TextView
+            android:id="@+id/txv_veloc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="50dp"
+            android:text="@string/sm_veloc"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/txv_impul"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/txv_veloc"
+            android:layout_marginLeft="50dp"
+            android:layout_toRightOf="@+id/txv_veloc"
+            android:text="@string/sm_impul"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <EditText
+            android:id="@+id/edtx_veloc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignRight="@+id/txv_veloc"
+            android:layout_below="@+id/txv_veloc"
+            android:inputType="numberDecimal" />
+
+        <EditText
+            android:id="@+id/edtx_impul"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/txv_impul"
+            android:layout_alignRight="@+id/txv_impul"
+            android:layout_alignTop="@+id/edtx_veloc"
+            android:inputType="numberDecimal" >
+
+            
+        </EditText>
+
+        <TextView
+            android:id="@+id/txv_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/txv_impul"
+            android:layout_marginLeft="50dp"
+            android:layout_toRightOf="@+id/txv_impul"
+            android:text="@string/sm_map"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Spinner
+            android:id="@+id/spn_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/txv_map"
+            android:layout_alignTop="@+id/edtx_impul"
+            android:prompt="@string/sm_mapprompt" />
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="125dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignRight="@+id/txv_map"
+            android:onClick="startGame"
+            android:text="@string/sm_start"><requestFocus /></Button>
+
+        <Button
+            android:id="@+id/btn_exit"
+            android:layout_width="125dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@+id/btn_start"
+             android:onClick="exit"
+            android:text="@string/sm_exit" />
+
+        <TextView
+            android:id="@+id/txv_scene"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/txv_map"
+            android:layout_marginLeft="50dp"
+            android:layout_toRightOf="@+id/spn_map"
+            android:text="@string/sm_scene"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Spinner
+            android:id="@+id/spn_scene"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/txv_scene"
+            android:layout_alignTop="@+id/spn_map"
+            android:prompt="@string/sm_sceneprompt" />
+
+    </RelativeLayout>

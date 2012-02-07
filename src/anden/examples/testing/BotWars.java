@@ -17,6 +17,8 @@ import org.anddev.andengine.engine.camera.hud.controls.DigitalOnScreenControl;
 import org.anddev.andengine.engine.handler.IUpdateHandler;
 import org.anddev.andengine.engine.handler.collision.ICollisionCallback;
 import org.anddev.andengine.engine.handler.physics.PhysicsHandler;
+import org.anddev.andengine.engine.handler.timer.ITimerCallback;
+import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.engine.options.EngineOptions;
 import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -34,7 +36,9 @@ import org.anddev.andengine.entity.shape.IShape;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.entity.util.FPSLogger;
+import org.anddev.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.anddev.andengine.extension.physics.box2d.PhysicsConnector;
+import org.anddev.andengine.extension.physics.box2d.PhysicsConnectorManager;
 import org.anddev.andengine.extension.physics.box2d.PhysicsFactory;
 import org.anddev.andengine.extension.physics.box2d.PhysicsWorld;
 import org.anddev.andengine.input.touch.TouchEvent;
@@ -46,6 +50,7 @@ import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
+import org.anddev.andengine.util.MathUtils;
 
 import android.content.Intent;
 import android.hardware.SensorManager;
@@ -76,41 +81,49 @@ public class BotWars extends BaseGameActivity {
 	// Constants
 	// ===========================================================
 
-	private static final int CAMERA_WIDTH = 800;
+	private static final int CAMERA_WIDTH = 800; // Camera Parameters
 	private static final int CAMERA_HEIGHT = 480;
-	public static final short CATEGORYBIT_WALL = 1;
+
+	public static final short CATEGORYBIT_WALL = 1; // Body Categories
 	public static final short CATEGORYBIT_PLAYER = 2;
 	public static final short CATEGORYBIT_ENEMY = 4;
 	public static final short CATEGORYBIT_BULLET = 8;
+
+	// Masks
+	// Put category bits of bodies which are supposed to collide in respective
+	// mask bits
 	public static final short MASKBITS_WALL = CATEGORYBIT_WALL
 			+ CATEGORYBIT_PLAYER + CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET;
 	public static final short MASKBITS_PLAYER = CATEGORYBIT_WALL
-			+ CATEGORYBIT_PLAYER + CATEGORYBIT_BULLET;
+			+ CATEGORYBIT_PLAYER;
 	public static final short MASKBITS_ENEMY = CATEGORYBIT_WALL
 			+ CATEGORYBIT_BULLET + CATEGORYBIT_ENEMY;
 	public static final short MASKBITS_BULLET = CATEGORYBIT_WALL
-			+ CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET + CATEGORYBIT_PLAYER;
+			+ CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET;
 	// ===========================================================
 	// Fields
 	// ===========================================================
-	private int bulletCount=0;
+	private int bulletCount = 0;
 	private SmoothCamera mCamera;
 
-	private BitmapTextureAtlas mBitmapTextureAtlas;
+	private BitmapTextureAtlas mBitmapTextureAtlas; // atlas for player and
+													// enemy textures
 	private TiledTextureRegion mPlayerTextureRegion;
 	private TiledTextureRegion mEnemyTextureRegion;
 
 	private BitmapTextureAtlas mBulletTextureAtlas;
 	private TiledTextureRegion mBulletTextureRegion;
 
-	
-	private BitmapTextureAtlas mOnScreenControlTexture;
+	private BitmapTextureAtlas mOnScreenControlTexture; // atlas for
+														// onScreenControl
+														// textures
 	private TextureRegion mOnScreenControlBaseTextureRegion;
 	private TextureRegion mOnScreenControlKnobTextureRegion;
 	private DigitalOnScreenControl mDigitalOnScreenControl;
 
-	private BitmapTextureAtlas mJumpTextureAtlas;
+	private BitmapTextureAtlas mHUDTextureAtlas; // atlas for HUD textures
 	private TextureRegion mJumpTextureRegion;
+	private TextureRegion mShootTextureRegion;
 
 	private TMXTiledMap mTMXTiledMap;
 	private Music mMusic;
@@ -129,10 +142,11 @@ public class BotWars extends BaseGameActivity {
 
 	private static String mapName = "tmx/map_1.tmx";
 	private static String mapBG = "tmx/scn_sunny.png";
-	private String fix1_name="",fix2_name="";
+	private String fix1_name = "", fix2_name = "";
 	private static int mapOffset = 100;
-private boolean deleteEnemy=false;
-	private boolean deleteBullet=false;
+	private boolean deleteEnemy = false;
+	private boolean deleteBullet = false;
+	private int playerDir;
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -178,11 +192,13 @@ private boolean deleteEnemy=false;
 		loadMap();
 	}
 
+	AnimatedSprite mEnemySprite;
+
 	@Override
 	public Scene onLoadScene() {
 
 		this.mEngine.registerUpdateHandler(new FPSLogger());
-
+		createEnemyWalkTimeHandler();
 		mScene = new Scene();
 
 		mScene.setBackground(this.mRepeatingSpriteBackground);
@@ -194,49 +210,44 @@ private boolean deleteEnemy=false;
 		}
 
 		final TMXLayer mTMXLayer = this.mTMXTiledMap.getTMXLayers().get(0);
-
-		mPlayerSprite = new AnimatedSprite(mapOffset, 0, this.mPlayerTextureRegion);
-
-		final AnimatedSprite mEnemySprite = new AnimatedSprite(mapOffset + 400, 0,
-				this.mEnemyTextureRegion);
-		mEnemySprite.animate(100);
-
-		//final AnimatedSprite mBulletSprite = new AnimatedSprite(mapOffset + 100, 0,this.mBulletTextureRegion);
-
+		
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0,
 				SensorManager.GRAVITY_EARTH), false);
 
-		final FixtureDef mPlayerFixtureDef = PhysicsFactory.createFixtureDef(0,
-				0f, 0f, false, CATEGORYBIT_PLAYER, MASKBITS_PLAYER, (short) 0);
-
-		mPlayerBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, mPlayerSprite,
-				BodyType.DynamicBody, mPlayerFixtureDef);
-		mPlayerBody.setUserData("player");
-		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(mPlayerSprite,
-				mPlayerBody, true, false));
-
-		final FixtureDef mEnemyFixtureDef = PhysicsFactory.createFixtureDef(0,
-				0f, 0f, false, CATEGORYBIT_ENEMY, MASKBITS_ENEMY, (short) 0);
-		final Body mEnemyBody = PhysicsFactory.createBoxBody(
-				this.mPhysicsWorld, mEnemySprite, BodyType.DynamicBody,
-				mEnemyFixtureDef);
-		mEnemyBody.setUserData("enemy");
-
-		final PhysicsConnector mEnemyPhysicsConnector = new PhysicsConnector(
-				mEnemySprite, mEnemyBody, true, false);
-		this.mPhysicsWorld.registerPhysicsConnector(mEnemyPhysicsConnector);
-
-/*		final FixtureDef mBulletFixtureDef = PhysicsFactory.createFixtureDef(0,
-				0f, 0f, false, CATEGORYBIT_BULLET, MASKBITS_BULLET, (short) 0);
-		final Body mBulletBody = PhysicsFactory.createCircleBody(
-				this.mPhysicsWorld, mBulletSprite, BodyType.DynamicBody,
-				mBulletFixtureDef);
-		mBulletBody.setUserData("bullet");
-
-		final PhysicsConnector mBulletPhysicsConnector = new PhysicsConnector(
-				mBulletSprite, mBulletBody, true, false);
-		this.mPhysicsWorld.registerPhysicsConnector(mBulletPhysicsConnector);
-*/
+		initCharacters();
+		
+		/*
+		 * mPlayerSprite = new AnimatedSprite(mapOffset, 0,
+		 * this.mPlayerTextureRegion);
+		 * 
+		 * mEnemySprite = new AnimatedSprite(mapOffset + 400, 0,
+		 * this.mEnemyTextureRegion); mEnemySprite.animate(100);
+		 * 
+		 * 
+		 * 
+		 * this.mPhysicsWorld = new PhysicsWorld(new Vector2(0,
+		 * SensorManager.GRAVITY_EARTH), false);
+		 * 
+		 * final FixtureDef mPlayerFixtureDef =
+		 * PhysicsFactory.createFixtureDef(0, 0f, 0f, false, CATEGORYBIT_PLAYER,
+		 * MASKBITS_PLAYER, (short) 0);
+		 * 
+		 * mPlayerBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld,
+		 * mPlayerSprite, BodyType.DynamicBody, mPlayerFixtureDef);
+		 * mPlayerBody.setUserData("player");
+		 * this.mPhysicsWorld.registerPhysicsConnector(new
+		 * PhysicsConnector(mPlayerSprite, mPlayerBody, true, false));
+		 * 
+		 * final FixtureDef mEnemyFixtureDef =
+		 * PhysicsFactory.createFixtureDef(0, 0f, 0f, false, CATEGORYBIT_ENEMY,
+		 * MASKBITS_ENEMY, (short) 0); final Body mEnemyBody =
+		 * PhysicsFactory.createBoxBody( this.mPhysicsWorld, mEnemySprite,
+		 * BodyType.DynamicBody, mEnemyFixtureDef);
+		 * mEnemyBody.setUserData("enemy");
+		 * 
+		 * this.mPhysicsWorld.registerPhysicsConnector(new
+		 * PhysicsConnector(mEnemySprite, mEnemyBody, true, false));
+		 */
 		mScene.registerUpdateHandler(this.mPhysicsWorld);
 
 		this.mPhysicsWorld.setContactListener(new ContactListener() {
@@ -245,37 +256,18 @@ private boolean deleteEnemy=false;
 
 				Fixture fix1 = contact.getFixtureA();
 				Fixture fix2 = contact.getFixtureB();
+				
+				
 				if (fix1.getBody().getUserData() != null
 						&& fix2.getBody().getUserData() != null) {
-					
-					fix1_name=fix1.getBody().getUserData().toString();
-					fix2_name=fix2.getBody().getUserData().toString();
 
-					if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name.equalsIgnoreCase("enemy"))
-							|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name.equalsIgnoreCase("enemy"))) deleteEnemy=true;
-					//else deleteEnemy=false;
-					if ((fix1_name.equalsIgnoreCase("bullet"))
-							|| (fix2_name.equalsIgnoreCase("bullet"))) deleteBullet=true;
-					else deleteBullet=false;
-					
-					//if ((fix1_name.equalsIgnoreCase("mBulletSprite") && fix2_name.equalsIgnoreCase("enemy"))
-					//		|| (fix2_name.equalsIgnoreCase("mBulletSprite") && fix1_name.equalsIgnoreCase("enemy"))) {
-						
-					//	mPhysicsWorld.unregisterPhysicsConnector(mEnemyPhysicsConnector);
-						//mPhysicsWorld.destroyBody(mEnemyPhysicsConnector.getBody());
+					fix1_name = fix1.getBody().getUserData().toString();
+					fix2_name = fix2.getBody().getUserData().toString();
 
-					//	mScene.detachChild(mEnemySprite);	
-					//}
-
-				}else {fix1_name="";fix2_name="";}
-				
-
-				// {Toast.makeText(BotWars.this,
-				// fix1.getBody().getUserData().toString(),
-				// Toast.LENGTH_SHORT);}
-				// if(fix1.getBody().getUserData().equals("mBulletSprite") &&
-				// fix2.getBody().getUserData().equals("enemy")){Toast.makeText(BotWars.this,
-				// "hit",Toast.LENGTH_SHORT ).show();}
+				} else {
+					fix1_name = "";
+					fix2_name = "";
+				}
 
 				isLanded = true;
 				Debug.d("BeginContact");
@@ -299,43 +291,57 @@ private boolean deleteEnemy=false;
 			}
 
 		});
-
 		mScene.registerUpdateHandler(new IUpdateHandler() {
 
 			public void onUpdate(float pSecondsElapsed) {
-				// if(mPlayerSprite.collidesWith(mEnemySprite)){
-			
-				if ((fix1_name.contains("bullet") && fix2_name.equalsIgnoreCase("enemy"))
-						|| (fix2_name.contains("bullet") && fix1_name.equalsIgnoreCase("enemy"))){
-						
-						Debug.d("HIT HIT HIT");
-						mPhysicsWorld.destroyBody(mEnemyPhysicsConnector.getBody());
-						mPhysicsWorld.unregisterPhysicsConnector(mEnemyPhysicsConnector);
-						mScene.detachChild(mEnemySprite);	
-						
-						//PhysicsConnector mBulletPhysicsConnector = mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mBulletSprite);
-						//mPhysicsWorld.unregisterPhysicsConnector(mBulletPhysicsConnector);
-					//mPhysicsWorld.destroyBody(mBulletPhysicsConnector.getBody());
 
-						//mScene.detachChild(mBulletSprite);	
-}
-//if(deleteBullet){
-				if ((fix1_name.contains("bullet") && fix1_name.contains("2"))
-						|| (fix2_name.contains("bullet") &&fix2_name.contains("2"))){
-						
-					PhysicsConnector mBulletPhysicsConnector = mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mBulletSprite);
-					mPhysicsWorld.unregisterPhysicsConnector(mBulletPhysicsConnector);
-					mPhysicsWorld.destroyBody(mBulletPhysicsConnector.getBody());
-					mScene.detachChild(mBulletSprite);	}
+				/*final Body mEnemyBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+						mEnemySprite);
+				if (mEnemyBody!= null){if(mEnemyBody.getPosition().x-mPlayerBody.getPosition().x<=100){mEnemyBody.applyLinearImpulse(10, 10, mEnemyBody.getPosition().x, mEnemyBody.getPosition().y);}}
+*/
+				
+				
+				if (mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+						mBulletSprite) != null)
+					// apply force to nullify gravity on bullet
 
-				// mPhysicsWorld.unregisterPhysicsConnector(mEnemyPhysicsConnector);
-				// mPhysicsWorld.destroyBody(mEnemyPhysicsConnector.getBody());
+					mPhysicsWorld
+							.getPhysicsConnectorManager()
+							.findBodyByShape(mBulletSprite)
+							.applyForce(
+									new Vector2(0, -SensorManager.GRAVITY_EARTH),
+									mPhysicsWorld.getPhysicsConnectorManager()
+											.findBodyByShape(mBulletSprite)
+											.getWorldCenter());
 
-				// mScene.detachChild(mEnemySprite);
+				if (mBulletSprite != null
+						&& mEnemySprite != null
+						&& mPhysicsWorld.getPhysicsConnectorManager()
+								.findPhysicsConnectorByShape(mEnemySprite) != null) {
+					if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name
+							.equalsIgnoreCase("enemy"))
+							
+							|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name
+									.equalsIgnoreCase("enemy"))) {
+									
+						destroyEnemy();
+						destroyBullet();
 
-				// }
-				// if(isLanded)mEnemyBody.setLinearVelocity(5, 0);else
-				// mEnemyBody.setLinearVelocity(0,0);
+					}
+				}
+
+				if (mBulletSprite != null
+						&& mPhysicsWorld.getPhysicsConnectorManager()
+								.findPhysicsConnectorByShape(mBulletSprite) != null
+						&& mPhysicsWorld.getPhysicsConnectorManager()
+								.findBodyByShape(mBulletSprite) != null) {
+					if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name
+							.equalsIgnoreCase("wall"))
+							|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name
+									.equalsIgnoreCase("wall"))) {
+						// destroyBullet();
+					}
+				}
 				mCamera.setCenter(mPlayerSprite.getX(), mPlayerSprite.getY());
 
 			}
@@ -346,33 +352,18 @@ private boolean deleteEnemy=false;
 			}
 		});
 
-		// final CollisionHandler collisionHandler = new CollisionHandler(this,
-		// mPlayerSprite, mEnemySprite);
-		// mPlayerSprite.registerUpdateHandler(collisionHandler);
-		// mEnemySprite.registerUpdateHandler(collisionHandler);
-
-		// ////////////////////////
 		initControls();
 		mScene.attachChild(mTMXLayer);
-		mScene.attachChild(mEnemySprite);
-		//mScene.attachChild(mBulletSprite);
+		//mScene.attachChild(mEnemySprite);
+
 		mScene.attachChild(mPlayerSprite);
 		createUnwalkableObjects(mTMXTiledMap);
-		// ///////////////////////
 
 		mScene.setChildScene(this.mDigitalOnScreenControl);
 
 		return mScene;
 	}
 
-	/*
-	 * @Override public boolean onSceneTouchEvent(Scene pScene, TouchEvent
-	 * pSceneTouchEvent) { if
-	 * (pSceneTouchEvent.getAction()==MotionEvent.ACTION_DOWN) {
-	 * mCamera.setZoomFactor(2.0f); mCamera.setCenter(fX, fY); } else
-	 * if(pSceneTouchEvent.getAction()==MotionEvent.ACTION_UP){
-	 * mCamera.setZoomFactor(1.0f); } return true; }
-	 */
 	@Override
 	public void onLoadComplete() {
 		// this.showDialog(DIALOG_ALLOWDIAGONAL_ID);
@@ -398,6 +389,7 @@ private boolean deleteEnemy=false;
 	// ===========================================================
 	// Methods
 	// ===========================================================
+	Rectangle rect;
 
 	private void createUnwalkableObjects(TMXTiledMap map) {
 		// Loop through the object groups
@@ -410,13 +402,14 @@ private boolean deleteEnemy=false;
 
 			for (final TMXObject object : group.getTMXObjects()) {
 
-				final Rectangle rect = new Rectangle(object.getX(),
-						object.getY(), object.getWidth(), object.getHeight());
-				// Debug.d("aaaaaaaaaaaaaaaaaaa" + rect);
+				rect = new Rectangle(object.getX(), object.getY(),
+						object.getWidth(), object.getHeight());
+
 				boxFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 1f,
 						false, CATEGORYBIT_WALL, MASKBITS_WALL, (short) 0);
+
 				PhysicsFactory.createBoxBody(this.mPhysicsWorld, rect,
-						BodyType.StaticBody, boxFixtureDef);
+						BodyType.StaticBody, boxFixtureDef).setUserData("wall");
 
 				rect.setVisible(false);
 				mScene.attachChild(rect);
@@ -430,8 +423,9 @@ private boolean deleteEnemy=false;
 
 		HUD mHUD = new HUD();
 
-		Sprite jump = new Sprite(CAMERA_WIDTH - 128, CAMERA_HEIGHT - 128,
+		Sprite jump = new Sprite(CAMERA_WIDTH - 120, CAMERA_HEIGHT - 175,
 				mJumpTextureRegion) {
+
 			@Override
 			public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY) {
 				if (pEvent.isActionDown() && isLanded) {
@@ -439,21 +433,30 @@ private boolean deleteEnemy=false;
 							mPlayerBody.getPosition().x, // /////JUMP
 							mPlayerBody.getPosition().y);
 					mCamera.setZoomFactor(0.80f);
+
 				}
 				if (pEvent.isActionUp())
 					mCamera.setZoomFactor(1.0f);
+				
+				
 				return false;
 
 			}
 
 		};
-		Sprite shoot = new Sprite(CAMERA_WIDTH - 128, CAMERA_HEIGHT - 256,
-				mJumpTextureRegion) {
+		jump.setScale(0.70f);
+		Sprite shoot = new Sprite(CAMERA_WIDTH - 200, CAMERA_HEIGHT - 100,
+				mShootTextureRegion) {
 			@Override
 			public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY) {
+
 				if (pEvent.isActionDown()) {
+					if (bulletPresent) {
+						destroyBullet();
+						bulletPresent = false;
+					}
 					spawnBullet();
-					
+
 				}
 				if (pEvent.isActionUp())
 					mCamera.setZoomFactor(1.0f);
@@ -462,9 +465,10 @@ private boolean deleteEnemy=false;
 			}
 
 		};
+		shoot.setScale(0.60f);
 		mHUD.registerTouchArea(shoot);
 		mHUD.attachChild(shoot);
-		// jump.setScale(0.3f);
+
 		mHUD.registerTouchArea(jump);
 		mHUD.attachChild(jump);
 
@@ -488,29 +492,35 @@ private boolean deleteEnemy=false;
 						// 200);
 
 						if (pValueX > 0 && !mPlayerSprite.isAnimationRunning()) {
-							mPlayerSprite.getTextureRegion().setFlippedHorizontal(false);
+							mPlayerSprite.getTextureRegion()
+									.setFlippedHorizontal(false);
 							mPlayerBody.setLinearVelocity(mLinearVelocityX,
 									mPlayerBody.getLinearVelocity().y);
 
 							mPlayerSprite.animate(duration, 0, 6, false);
 							// (30, false);
 							mSound.play();
+							playerDir=1;
 						}
 
-						else if (pValueX < 0 && !mPlayerSprite.isAnimationRunning()) {
-							mPlayerSprite.getTextureRegion().setFlippedHorizontal(true);
+						else if (pValueX < 0
+								&& !mPlayerSprite.isAnimationRunning()) {
+							mPlayerSprite.getTextureRegion()
+									.setFlippedHorizontal(true);
 							mPlayerBody.setLinearVelocity(-mLinearVelocityX,
 									mPlayerBody.getLinearVelocity().y);
 							mPlayerSprite.animate(duration, 0, 6, false);
 							// mPlayerSprite.animate(30, false);
 							mSound.play();
+							playerDir=-1;
 						} else if (pValueX == 0) {
 							mPlayerBody.setLinearVelocity(0f,
 									mPlayerBody.getLinearVelocity().y);
 
 						}
 						// else mPlayerSprite.stopAnimation();
-						// mCamera.setCenter(mPlayerSprite.getX(), mPlayerSprite.getY());
+						// mCamera.setCenter(mPlayerSprite.getX(),
+						// mPlayerSprite.getY());
 
 					}
 
@@ -538,8 +548,6 @@ private boolean deleteEnemy=false;
 
 			this.mTMXTiledMap = mTMXLoader.loadFromAsset(this, mapName);
 
-			// Toast.makeText(this, "Well,atleast the TMX loads... "
-			// ,Toast.LENGTH_LONG).show();
 		} catch (final TMXLoadException tmxle) {
 			Debug.e(tmxle);
 		}
@@ -549,10 +557,6 @@ private boolean deleteEnemy=false;
 	private void loadCharacters() {
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(512, 256,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		
-		// this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
-		// .createTiledFromAsset(this.mBitmapTextureAtlas, this,
-		// "snapdragon_tiled32.png", 0, 0, 4, 3);
 
 		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
@@ -561,21 +565,22 @@ private boolean deleteEnemy=false;
 		this.mEnemyTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
 						"banana_tiled.png", 0, 64, 4, 2);
-	
-		//this.mBulletTextureAtlas=new BitmapTextureAtlas(32, 32, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		this.mBulletTextureRegion=BitmapTextureAtlasTextureRegionFactory
+
+		this.mBulletTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
 						"bullet.png", 0, 128, 1, 1);
-		
+
 	}
 
 	private void loadControls() {
 
-		this.mJumpTextureAtlas = new BitmapTextureAtlas(128, 128,
+		this.mHUDTextureAtlas = new BitmapTextureAtlas(256, 128,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		this.mJumpTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(this.mJumpTextureAtlas, this, "jump1.png", 0,
-						0);
+				.createFromAsset(this.mHUDTextureAtlas, this, "jump.png", 0, 0);
+
+		this.mShootTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(mHUDTextureAtlas, this, "shoot.png", 128, 0);
 
 		this.mOnScreenControlTexture = new BitmapTextureAtlas(256, 128,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
@@ -589,7 +594,7 @@ private boolean deleteEnemy=false;
 						"onscreen_control_knob.png", 128, 0);
 
 		this.mEngine.getTextureManager().loadTextures(this.mBitmapTextureAtlas,
-				this.mOnScreenControlTexture, this.mJumpTextureAtlas);
+				this.mOnScreenControlTexture, this.mHUDTextureAtlas);
 
 	}
 
@@ -660,35 +665,39 @@ private boolean deleteEnemy=false;
 		}
 		return true;
 	}
+
 	AnimatedSprite mBulletSprite;
-	
-	public void spawnBullet()
-	{bulletCount++;
-		mBulletSprite = new AnimatedSprite(mPlayerSprite.getX()+mPlayerSprite.getWidth(), mPlayerSprite.getY()+mPlayerSprite.getHeight()/4,mBulletTextureRegion);
+	boolean bulletPresent = false;
 
-		FixtureDef mBulletFixtureDef = PhysicsFactory.createFixtureDef(0,
-				0f, 0f, false, CATEGORYBIT_BULLET, MASKBITS_BULLET, (short) 0);
-		
-		Body mBulletBody = PhysicsFactory.createCircleBody(
-				this.mPhysicsWorld, mBulletSprite, BodyType.DynamicBody,
-				mBulletFixtureDef);
-		mBulletBody.setUserData("bullet"+bulletCount);
+	public void spawnBullet() {
+		bulletPresent = true;
+		mBulletSprite = new AnimatedSprite(mPlayerSprite.getX()
+				+ playerDir*(mPlayerSprite.getWidth() + mPlayerSprite.getWidth() / 4),
+				mPlayerSprite.getY() + mPlayerSprite.getHeight() / 4,
+				mBulletTextureRegion);
 
-		final PhysicsConnector mBulletPhysicsConnector = new PhysicsConnector(
-				mBulletSprite, mBulletBody, true, false);
-		
-		mPhysicsWorld.registerPhysicsConnector(mBulletPhysicsConnector);
-		mBulletBody.setLinearVelocity(20, 0);
-		mCamera.setZoomFactor(0.80f);
+		FixtureDef mBulletFixtureDef = PhysicsFactory.createFixtureDef(0, 0f,
+				0f, false, CATEGORYBIT_BULLET, MASKBITS_BULLET, (short) 0);
+
+		Body mBulletBody = PhysicsFactory.createCircleBody(this.mPhysicsWorld,
+				mBulletSprite, BodyType.DynamicBody, mBulletFixtureDef);
+		mBulletBody.setUserData("bullet");
+
+		mBulletBody.setBullet(true);
+
+		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(
+				mBulletSprite, mBulletBody, true, true));
+
+		mBulletBody.setLinearVelocity(playerDir*20, 0);
+
+
 		mScene.attachChild(mBulletSprite);
-		
-		//if(mBulletBody!=null){mPhysicsWorld.unregisterPhysicsConnector(mBulletPhysicsConnector);
-		//mPhysicsWorld.destroyBody(mBulletPhysicsConnector.getBody());
+		mCamera.setZoomFactor(0.80f);
+		bulletPresent = true;
 
-		//mScene.detachChild(mBulletSprite);
-	
 	}
-	
+
+
 	public static void setImpulse(String str) {
 		mImpulseY = Float.parseFloat(str);
 	}
@@ -730,6 +739,112 @@ private boolean deleteEnemy=false;
 		}
 	}
 
+	private void destroyEnemy() {
+		if (mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+				mEnemySprite) != null) {
+			mPhysicsWorld
+					.destroyBody(mPhysicsWorld.getPhysicsConnectorManager()
+							.findBodyByShape(mEnemySprite));
+			mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld
+					.getPhysicsConnectorManager().findPhysicsConnectorByShape(
+							mEnemySprite));
+			mScene.detachChild(mEnemySprite);
+		}
+	}
+
+	public void destroyBullet() {
+		if (mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+				mBulletSprite) != null) {
+			mPhysicsWorld.destroyBody(mPhysicsWorld
+					.getPhysicsConnectorManager()
+					.findBodyByShape(mBulletSprite));
+			mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld
+					.getPhysicsConnectorManager().findPhysicsConnectorByShape(
+							mBulletSprite));
+			mScene.detachChild(mBulletSprite);
+		}
+	}
+private void spawnPlayer(){
+
+	mPlayerSprite = new AnimatedSprite(mapOffset, 0,
+			this.mPlayerTextureRegion);
+	
+	final FixtureDef mPlayerFixtureDef = PhysicsFactory.createFixtureDef(0,
+			0f, 0f, false, CATEGORYBIT_PLAYER, MASKBITS_PLAYER, (short) 0);
+
+	mPlayerBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld,
+			mPlayerSprite, BodyType.DynamicBody, mPlayerFixtureDef);
+	mPlayerBody.setUserData("player");
+	this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(
+			mPlayerSprite, mPlayerBody, true, false));
+
+}
+
+public void spawnEnemy(int xLoc) {
+	
+	mEnemySprite = new AnimatedSprite(mapOffset+100*xLoc,0,mEnemyTextureRegion);
+
+	FixtureDef mEnemyFixtureDef = PhysicsFactory.createFixtureDef(0, 0f,
+			0f, false, CATEGORYBIT_ENEMY, MASKBITS_ENEMY, (short) 0);
+
+	Body mEnemyBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld,
+			mEnemySprite, BodyType.DynamicBody, mEnemyFixtureDef);
+	mEnemyBody.setUserData("enemy"+xLoc);
+	this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(
+			mEnemySprite, mEnemyBody, true, true));
+	mScene.attachChild(mEnemySprite);
+}
+	private void initCharacters() {
+for(int i=1;i<=2;i++){spawnEnemy(i);}
+		//for(int i=1;i<=10;i++)
+	//{spawnMultiBullet(i);}
+spawnPlayer();
+	}
+
+	private int dir = 0;
+
+	private void createEnemyWalkTimeHandler() {
+		TimerHandler enemyWalkTimerHandler;
+
+		this.getEngine().registerUpdateHandler(
+				enemyWalkTimerHandler = new TimerHandler(4, true,
+						new ITimerCallback() {
+							@Override
+							public void onTimePassed(
+									final TimerHandler pTimerHandler) {
+
+								Body EnemyBody = mPhysicsWorld
+										.getPhysicsConnectorManager()
+										.findBodyByShape(mEnemySprite);
+								if(EnemyBody!=null)
+								{if (dir % 2 == 0 && isLanded) {
+									EnemyBody.setLinearVelocity(
+											mLinearVelocityX, 0);
+									EnemyBody.applyLinearImpulse(0, -10,
+											mPlayerBody.getPosition().x,
+											mPlayerBody.getPosition().y);
+								}
+
+								if (dir % 2 != 0) {
+									EnemyBody.applyLinearImpulse(0, -10,
+											mPlayerBody.getPosition().x,
+											mPlayerBody.getPosition().y);
+									EnemyBody.setLinearVelocity(
+											-mLinearVelocityX, 0);
+								}
+
+								dir++;
+								}
+								// Random Position Generator
+								// final float xPos = MathUtils.random(30.0f,
+								// (CAMERA_WIDTH - 30.0f));
+								// final float yPos = MathUtils.random(30.0f,
+								// (CAMERA_HEIGHT - 30.0f));
+
+								// createSprite(xPos, yPos);
+							}
+						}));
+	}
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
