@@ -1,6 +1,7 @@
 package anden.examples.testing;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -22,6 +23,8 @@ import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.engine.options.EngineOptions;
 import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.anddev.andengine.entity.IEntity;
+import org.anddev.andengine.entity.IEntity.IEntityMatcher;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXObject;
@@ -95,9 +98,9 @@ public class BotWars extends BaseGameActivity {
 	public static final short MASKBITS_WALL = CATEGORYBIT_WALL
 			+ CATEGORYBIT_PLAYER + CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET;
 	public static final short MASKBITS_PLAYER = CATEGORYBIT_WALL
-			+ CATEGORYBIT_PLAYER;
+			+ CATEGORYBIT_PLAYER+CATEGORYBIT_ENEMY;
 	public static final short MASKBITS_ENEMY = CATEGORYBIT_WALL
-			+ CATEGORYBIT_BULLET + CATEGORYBIT_ENEMY;
+			+ CATEGORYBIT_BULLET + CATEGORYBIT_ENEMY+CATEGORYBIT_PLAYER;
 	public static final short MASKBITS_BULLET = CATEGORYBIT_WALL
 			+ CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET;
 	// ===========================================================
@@ -124,7 +127,11 @@ public class BotWars extends BaseGameActivity {
 	private BitmapTextureAtlas mHUDTextureAtlas; // atlas for HUD textures
 	private TextureRegion mJumpTextureRegion;
 	private TextureRegion mShootTextureRegion;
+	private TiledTextureRegion mHealthRegion;
 
+	
+	private AnimatedSprite mEnemySprite;
+	
 	private TMXTiledMap mTMXTiledMap;
 	private Music mMusic;
 	private Sound mSound;
@@ -135,7 +142,8 @@ public class BotWars extends BaseGameActivity {
 	private PhysicsWorld mPhysicsWorld;
 	private FixtureDef boxFixtureDef;
 	private AnimatedSprite mPlayerSprite;
-	private long[] duration;
+	private AnimatedSprite mBulletSprite;
+	private long[] player_duration,health_duration;
 
 	private static float mImpulseY = 14f;
 	private static float mLinearVelocityX = 8.0f;
@@ -147,6 +155,23 @@ public class BotWars extends BaseGameActivity {
 	private boolean deleteEnemy = false;
 	private boolean deleteBullet = false;
 	private int playerDir;
+	private boolean desBull=false;
+	private boolean desEnemy=false;
+	private boolean bulletPresent = false;
+	private boolean reduceHealth=false;
+	private float refrainImpulse=5.0f;
+
+	public float Player_Max_Health=100.0f;
+
+	public float Player_Health_Reduce=20.0f;
+	
+	private AnimatedSprite mHealthSprite;
+	private ContactListener collisionListener;
+	private IUpdateHandler gameUpdater;
+	private static boolean enableMusic;
+    private static  boolean enableSounds;
+    private static float mVolume=1.0f;
+	//private Body collBody1,collBody2;
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -178,9 +203,9 @@ public class BotWars extends BaseGameActivity {
 	public void onLoadResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
-		duration = new long[7];
+		player_duration = new long[7];
 		for (int i = 0; i <= 6; i++) {
-			duration[i] = 50;
+			player_duration[i] = 50;
 		}
 
 		MusicFactory.setAssetBasePath("mfx/");
@@ -192,8 +217,8 @@ public class BotWars extends BaseGameActivity {
 		loadMap();
 	}
 
-	AnimatedSprite mEnemySprite;
-
+	Fixture fix1;
+	ArrayList<IEntity> mEntityList;
 	@Override
 	public Scene onLoadScene() {
 
@@ -202,13 +227,13 @@ public class BotWars extends BaseGameActivity {
 		mScene = new Scene();
 
 		mScene.setBackground(this.mRepeatingSpriteBackground);
-
+if(enableMusic){
 		if (mMusic.isPlaying()) {
 			mMusic.pause();
-		} else {// mMusic.setVolume(0.1f);
+		} else {mMusic.setVolume(mVolume);
 			mMusic.play();
 		}
-
+}
 		final TMXLayer mTMXLayer = this.mTMXTiledMap.getTMXLayers().get(0);
 		
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0,
@@ -216,47 +241,52 @@ public class BotWars extends BaseGameActivity {
 
 		initCharacters();
 		
-		/*
-		 * mPlayerSprite = new AnimatedSprite(mapOffset, 0,
-		 * this.mPlayerTextureRegion);
-		 * 
-		 * mEnemySprite = new AnimatedSprite(mapOffset + 400, 0,
-		 * this.mEnemyTextureRegion); mEnemySprite.animate(100);
-		 * 
-		 * 
-		 * 
-		 * this.mPhysicsWorld = new PhysicsWorld(new Vector2(0,
-		 * SensorManager.GRAVITY_EARTH), false);
-		 * 
-		 * final FixtureDef mPlayerFixtureDef =
-		 * PhysicsFactory.createFixtureDef(0, 0f, 0f, false, CATEGORYBIT_PLAYER,
-		 * MASKBITS_PLAYER, (short) 0);
-		 * 
-		 * mPlayerBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld,
-		 * mPlayerSprite, BodyType.DynamicBody, mPlayerFixtureDef);
-		 * mPlayerBody.setUserData("player");
-		 * this.mPhysicsWorld.registerPhysicsConnector(new
-		 * PhysicsConnector(mPlayerSprite, mPlayerBody, true, false));
-		 * 
-		 * final FixtureDef mEnemyFixtureDef =
-		 * PhysicsFactory.createFixtureDef(0, 0f, 0f, false, CATEGORYBIT_ENEMY,
-		 * MASKBITS_ENEMY, (short) 0); final Body mEnemyBody =
-		 * PhysicsFactory.createBoxBody( this.mPhysicsWorld, mEnemySprite,
-		 * BodyType.DynamicBody, mEnemyFixtureDef);
-		 * mEnemyBody.setUserData("enemy");
-		 * 
-		 * this.mPhysicsWorld.registerPhysicsConnector(new
-		 * PhysicsConnector(mEnemySprite, mEnemyBody, true, false));
-		 */
+		
 		mScene.registerUpdateHandler(this.mPhysicsWorld);
+		
+		createCollisionListener();
+		this.mPhysicsWorld.setContactListener(collisionListener);
+			
+		createGameUpdateHandler();
+		mScene.registerUpdateHandler(gameUpdater);
+				
+		
+		initControls();
+		mScene.attachChild(mTMXLayer);
+		//mScene.attachChild(mEnemySprite);
 
-		this.mPhysicsWorld.setContactListener(new ContactListener() {
+		mScene.attachChild(mPlayerSprite);
+		createUnwalkableObjects(mTMXTiledMap);
+
+		mScene.setChildScene(this.mDigitalOnScreenControl);
+
+
+		mEntityList=new ArrayList<IEntity>(mScene.getChildCount());
+		
+		for(int i=0;i<mScene.getChildCount();i++)mEntityList.add(mScene.getChild(i));
+		
+		
+		return mScene;
+	}
+
+	private void createCollisionListener()
+	{
+		collisionListener=new ContactListener() {
 
 			public void beginContact(Contact contact) {
-
-				Fixture fix1 = contact.getFixtureA();
+				
+				fix1 = contact.getFixtureA();
 				Fixture fix2 = contact.getFixtureB();
 				
+				Body collBody1=fix1.getBody();
+				Body collBody2=fix2.getBody();
+
+				final Body pBulletBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+						mBulletSprite);
+				final Body pEnemyBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+						mEnemySprite);
+				final Body pWallBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(rect);
+			
 				
 				if (fix1.getBody().getUserData() != null
 						&& fix2.getBody().getUserData() != null) {
@@ -270,12 +300,65 @@ public class BotWars extends BaseGameActivity {
 				}
 
 				isLanded = true;
-				Debug.d("BeginContact");
+				//Debug.d("BeginContact");
 
+				
+				if (mBulletSprite != null
+						&& mPhysicsWorld.getPhysicsConnectorManager()
+								.findPhysicsConnectorByShape(mBulletSprite) != null
+						&&pBulletBody != null) 
+				{
+					if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name
+							.equalsIgnoreCase("wall"))
+							|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name
+								.equalsIgnoreCase("wall"))) {
+						//if(desBull){
+					
+					desBull=true;
+					
+					}
+					
+					
+					
+				}
+				
+				if ((fix1_name.equalsIgnoreCase("player") && fix2_name.contains("enemy"))
+						|| (fix2_name.equalsIgnoreCase("player") && fix1_name.contains("enemy"))) {Debug.d("player hits enemy");reduceHealth=true;}
+					else reduceHealth=false;
+				
+				
+				if (mBulletSprite != null
+						&& mEnemySprite != null){
+						//&& pEnemyBody!=null) {
+					if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name
+							.contains("enemy"))
+							
+							|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name
+									.contains("enemy"))) {
+									
+						desEnemy=true;
+						desBull=true;
+
+					}
+					
+					
+					
+				//if(collBody1==pEnemyBody||collBody2==pEnemyBody)Debug.d("enemy body hit");
+				//if(fix1_name=="enemy"||fix2_name=="enemy")Debug.d("enemy hit hit hit");
+					
+				}
+				
+				
+				
+				
 			}
 
 			public void endContact(Contact contact) {
-
+				fix1_name = "";
+				fix2_name = "";	
+				desEnemy=false;
+				desBull=false;
+				reduceHealth=false;
 				isLanded = false;
 
 			}
@@ -290,102 +373,130 @@ public class BotWars extends BaseGameActivity {
 
 			}
 
-		});
-		mScene.registerUpdateHandler(new IUpdateHandler() {
-
-			public void onUpdate(float pSecondsElapsed) {
-
-				/*final Body mEnemyBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
-						mEnemySprite);
-				if (mEnemyBody!= null){if(mEnemyBody.getPosition().x-mPlayerBody.getPosition().x<=100){mEnemyBody.applyLinearImpulse(10, 10, mEnemyBody.getPosition().x, mEnemyBody.getPosition().y);}}
-*/
-				
-				
-				if (mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
-						mBulletSprite) != null)
-					// apply force to nullify gravity on bullet
-
-					mPhysicsWorld
-							.getPhysicsConnectorManager()
-							.findBodyByShape(mBulletSprite)
-							.applyForce(
-									new Vector2(0, -SensorManager.GRAVITY_EARTH),
-									mPhysicsWorld.getPhysicsConnectorManager()
-											.findBodyByShape(mBulletSprite)
-											.getWorldCenter());
-
-				if (mBulletSprite != null
-						&& mEnemySprite != null
-						&& mPhysicsWorld.getPhysicsConnectorManager()
-								.findPhysicsConnectorByShape(mEnemySprite) != null) {
-					if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name
-							.equalsIgnoreCase("enemy"))
-							
-							|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name
-									.equalsIgnoreCase("enemy"))) {
-									
-						destroyEnemy();
-						destroyBullet();
-
-					}
-				}
-
-				if (mBulletSprite != null
-						&& mPhysicsWorld.getPhysicsConnectorManager()
-								.findPhysicsConnectorByShape(mBulletSprite) != null
-						&& mPhysicsWorld.getPhysicsConnectorManager()
-								.findBodyByShape(mBulletSprite) != null) {
-					if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name
-							.equalsIgnoreCase("wall"))
-							|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name
-									.equalsIgnoreCase("wall"))) {
-						// destroyBullet();
-					}
-				}
-				mCamera.setCenter(mPlayerSprite.getX(), mPlayerSprite.getY());
-
-			}
-
-			public void reset() {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		initControls();
-		mScene.attachChild(mTMXLayer);
-		//mScene.attachChild(mEnemySprite);
-
-		mScene.attachChild(mPlayerSprite);
-		createUnwalkableObjects(mTMXTiledMap);
-
-		mScene.setChildScene(this.mDigitalOnScreenControl);
-
-		return mScene;
+		};
+		
+		
 	}
+	
+	private void createGameUpdateHandler()
+	{gameUpdater=new IUpdateHandler() {
 
+		public void onUpdate(float pSecondsElapsed) {
+
+			
+			final Body pBulletBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+					mBulletSprite);
+			
+			final Body pEnemyBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+					mEnemySprite);
+			
+			final Body pPlayerBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
+					mPlayerSprite);
+			
+			if (pBulletBody != null)
+				// apply force to nullify gravity on bullet
+			
+				pBulletBody
+						.applyForce(
+								new Vector2(0, -SensorManager.GRAVITY_EARTH),
+								pBulletBody.getWorldCenter());
+/*
+			if (mBulletSprite != null
+					&& mEnemySprite != null
+					&& pEnemyBody!=null) {
+				if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name
+						.equalsIgnoreCase("enemy"))
+						
+						|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name
+								.equalsIgnoreCase("enemy"))) {
+								
+					destroyEnemy();
+					destroyBullet();
+
+				}
+			}*/
+
+		/*	if (mBulletSprite != null
+					&& mPhysicsWorld.getPhysicsConnectorManager()
+							.findPhysicsConnectorByShape(mBulletSprite) != null
+					&&pBulletBody != null) {
+				if ((fix1_name.equalsIgnoreCase("bullet") && fix2_name
+						.equalsIgnoreCase("wall"))
+						|| (fix2_name.equalsIgnoreCase("bullet") && fix1_name
+							.equalsIgnoreCase("wall"))) {
+				//if(desBull){
+					Debug.d("BULLHIT");
+				destroyBullet();
+				}
+			}*//////////////
+			if(desEnemy){destroyEnemy(fix1_name,fix2_name);desEnemy=false;}
+			if(desBull){destroyBullet();desBull=false;}
+			
+			////////////////////////////////////////////////////////////////////////////////////////
+			
+			if(reduceHealth&&mHealthSprite!=null&&mPlayerSprite!=null){
+					Debug.d("Player_Max_Health_Here_Man");
+			
+				
+				pPlayerBody.applyLinearImpulse((float) (refrainImpulse*1.5),-refrainImpulse,
+				pPlayerBody.getPosition().x, 
+				pPlayerBody.getPosition().y);
+				
+				Player_Max_Health-=Player_Health_Reduce;
+				
+				
+				health_duration = new long[2];
+				health_duration[0]=50;
+				health_duration[1]=50;
+				
+				switch((int)Player_Max_Health)
+				{
+				  case 100: break;
+				  case 80: mHealthSprite.animate(health_duration,0,1,false); break;
+				  case 60: mHealthSprite.animate(health_duration,1,2,false); break;
+				  case 40: mHealthSprite.animate(health_duration,2,3,false);break;
+				  case 20: mHealthSprite.animate(health_duration,3,4,false);break;
+				  default : break;
+				
+				}
+						
+			if(Player_Max_Health<=0)
+				{
+			
+          
+					mPhysicsWorld.destroyBody(pPlayerBody);
+					mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mPlayerSprite));
+					mScene.detachChild(mPlayerSprite);
+				}
+			reduceHealth=false;}	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			
+			
+	
+			mCamera.setCenter(mPlayerSprite.getX(), mPlayerSprite.getY());
+		}
+		
+		
+		
+		
+		
+		@Override
+		public void reset() {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	
+	};
+	
+	}
+	
 	@Override
 	public void onLoadComplete() {
 		// this.showDialog(DIALOG_ALLOWDIAGONAL_ID);
 
 	}
 
-	/*
-	 * @Override protected Dialog onCreateDialog(final int pID) { switch(pID) {
-	 * case DIALOG_ALLOWDIAGONAL_ID: return new AlertDialog.Builder(this)
-	 * .setTitle("Setup...") .setMessage(
-	 * "Do you wish to allow diagonal directions on the OnScreenControl?")
-	 * .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-	 * 
-	 * @Override public void onClick(final DialogInterface pDialog, final int
-	 * pWhich) { BotWars.this.mDigitalOnScreenControl.setAllowDiagonal(true); }
-	 * }) .setNegativeButton("No", new DialogInterface.OnClickListener() {
-	 * 
-	 * @Override public void onClick(final DialogInterface pDialog, final int
-	 * pWhich) { BotWars.this.mDigitalOnScreenControl.setAllowDiagonal(false); }
-	 * }) .create(); } return super.onCreateDialog(pID); }
-	 */
-
+	
 	// ===========================================================
 	// Methods
 	// ===========================================================
@@ -423,6 +534,7 @@ public class BotWars extends BaseGameActivity {
 
 		HUD mHUD = new HUD();
 
+		
 		Sprite jump = new Sprite(CAMERA_WIDTH - 120, CAMERA_HEIGHT - 175,
 				mJumpTextureRegion) {
 
@@ -453,7 +565,7 @@ public class BotWars extends BaseGameActivity {
 				if (pEvent.isActionDown()) {
 					if (bulletPresent) {
 						destroyBullet();
-						bulletPresent = false;
+						
 					}
 					spawnBullet();
 
@@ -466,15 +578,18 @@ public class BotWars extends BaseGameActivity {
 
 		};
 		shoot.setScale(0.60f);
+		mHealthSprite=new AnimatedSprite(CAMERA_WIDTH-256, 10,mHealthRegion );
+		mHealthSprite.setScale(0.5f);
+
 		mHUD.registerTouchArea(shoot);
 		mHUD.attachChild(shoot);
 
 		mHUD.registerTouchArea(jump);
 		mHUD.attachChild(jump);
-
+		mHUD.attachChild(mHealthSprite);
 		mCamera.setHUD(mHUD);
 
-		// /////////////////////////////////////////////////////////////////////////////////////
+
 
 		this.mDigitalOnScreenControl = new DigitalOnScreenControl(0,
 				CAMERA_HEIGHT
@@ -488,8 +603,7 @@ public class BotWars extends BaseGameActivity {
 							final BaseOnScreenControl pBaseOnScreenControl,
 							final float pValueX, final float pValueY) {
 
-						// physicsHandler.setVelocity(pValueX * 200, pValueY *
-						// 200);
+						
 
 						if (pValueX > 0 && !mPlayerSprite.isAnimationRunning()) {
 							mPlayerSprite.getTextureRegion()
@@ -497,9 +611,9 @@ public class BotWars extends BaseGameActivity {
 							mPlayerBody.setLinearVelocity(mLinearVelocityX,
 									mPlayerBody.getLinearVelocity().y);
 
-							mPlayerSprite.animate(duration, 0, 6, false);
-							// (30, false);
-							mSound.play();
+							mPlayerSprite.animate(player_duration, 0, 6, false);
+						
+							if(enableSounds)mSound.play();
 							playerDir=1;
 						}
 
@@ -509,8 +623,8 @@ public class BotWars extends BaseGameActivity {
 									.setFlippedHorizontal(true);
 							mPlayerBody.setLinearVelocity(-mLinearVelocityX,
 									mPlayerBody.getLinearVelocity().y);
-							mPlayerSprite.animate(duration, 0, 6, false);
-							// mPlayerSprite.animate(30, false);
+							mPlayerSprite.animate(player_duration, 0, 6, false);
+						
 							mSound.play();
 							playerDir=-1;
 						} else if (pValueX == 0) {
@@ -518,9 +632,6 @@ public class BotWars extends BaseGameActivity {
 									mPlayerBody.getLinearVelocity().y);
 
 						}
-						// else mPlayerSprite.stopAnimation();
-						// mCamera.setCenter(mPlayerSprite.getX(),
-						// mPlayerSprite.getY());
 
 					}
 
@@ -574,14 +685,19 @@ public class BotWars extends BaseGameActivity {
 
 	private void loadControls() {
 
-		this.mHUDTextureAtlas = new BitmapTextureAtlas(256, 128,
-				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+
+		this.mHUDTextureAtlas = new BitmapTextureAtlas(256, 1024,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		
 		this.mJumpTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(this.mHUDTextureAtlas, this, "jump.png", 0, 0);
+				.createFromAsset(this.mHUDTextureAtlas, this, "jump.png", 0, 128);
 
 		this.mShootTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createFromAsset(mHUDTextureAtlas, this, "shoot.png", 128, 0);
 
+	this.mHealthRegion= BitmapTextureAtlasTextureRegionFactory
+		        .createTiledFromAsset(this.mHUDTextureAtlas, this,
+				"health_bar.png",0,256,1,8);
+		
 		this.mOnScreenControlTexture = new BitmapTextureAtlas(256, 128,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 
@@ -592,7 +708,9 @@ public class BotWars extends BaseGameActivity {
 		this.mOnScreenControlKnobTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createFromAsset(this.mOnScreenControlTexture, this,
 						"onscreen_control_knob.png", 128, 0);
-
+		
+		
+		
 		this.mEngine.getTextureManager().loadTextures(this.mBitmapTextureAtlas,
 				this.mOnScreenControlTexture, this.mHUDTextureAtlas);
 
@@ -654,7 +772,7 @@ public class BotWars extends BaseGameActivity {
 			else if (item.getItemId() == 2) {// return to main menu
 				// onDestroy();
 
-				Intent StartIntent = new Intent(BotWars.this, StartMenu.class);
+				Intent StartIntent = new Intent(BotWars.this, GameMenuActivity.class);
 				startActivity(StartIntent);
 
 				finish();
@@ -666,11 +784,9 @@ public class BotWars extends BaseGameActivity {
 		return true;
 	}
 
-	AnimatedSprite mBulletSprite;
-	boolean bulletPresent = false;
-
+	
 	public void spawnBullet() {
-		bulletPresent = true;
+		
 		mBulletSprite = new AnimatedSprite(mPlayerSprite.getX()
 				+ playerDir*(mPlayerSprite.getWidth() + mPlayerSprite.getWidth() / 4),
 				mPlayerSprite.getY() + mPlayerSprite.getHeight() / 4,
@@ -702,8 +818,8 @@ public class BotWars extends BaseGameActivity {
 		mImpulseY = Float.parseFloat(str);
 	}
 
-	public static void setVelocity(String str) {
-		mLinearVelocityX = Float.parseFloat(str);
+	public static void setVelocity(float str) {
+		mLinearVelocityX =str; //Float.parseFloat(str);
 	}
 
 	public static void setMap(int mapID) {
@@ -739,17 +855,46 @@ public class BotWars extends BaseGameActivity {
 		}
 	}
 
-	private void destroyEnemy() {
-		if (mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(
-				mEnemySprite) != null) {
+	private void destroyEnemy(String bodyName1,String bodyName2) {
+		final String name1=bodyName1;
+		final String name2=bodyName2;
+		Debug.d(bodyName1+"  "+bodyName2);
+	/*	final Body pEnemyBody=mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(mEnemySprite);
+		//if (pEnemyBody != null&&((pEnemyBody.getUserData()==bodyName1)||(pEnemyBody.getUserData()==bodyName2))) {
+			if(pEnemyBody.getUserData()=="enemy1"){	Debug.d("yoyoyo");
 			mPhysicsWorld
-					.destroyBody(mPhysicsWorld.getPhysicsConnectorManager()
-							.findBodyByShape(mEnemySprite));
+					.destroyBody(pEnemyBody);
 			mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld
 					.getPhysicsConnectorManager().findPhysicsConnectorByShape(
 							mEnemySprite));
+			
 			mScene.detachChild(mEnemySprite);
+			Debug.d("enemy killed"+bodyName1+bodyName2);}
+	*/
+		//if(fix1!=null)mPhysicsWorld.destroyBody(fix1.getBody());
+		//PhysicsConnector pEnemyPhysConn=mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mEnemySprite);
+		
+		//if(pEnemyPhysConn.getBody()==fix1.getBody())mPhysicsWorld.unregisterPhysicsConnector(pEnemyPhysConn);
+	
+		
+		for(IEntity pEnemy:mEntityList){if(pEnemy.getUserData()!=null){
+			if(pEnemy.getUserData().toString().equalsIgnoreCase(bodyName1)||pEnemy.getUserData().toString().equalsIgnoreCase(bodyName2))
+				{mScene.detachChild(pEnemy);
+				mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape((IShape)pEnemy));
+				mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape((IShape)pEnemy));}
+			}
 		}
+			//Debug.d("see"+ie.getUserData().toString());}}//
+		//if(phycon.getShape()==fix1.getShape())
+
+	
+//IEntity xyz=fix1.;
+
+//if(imat.matches(mEnemySprite)){Debug.d("zooopu");}
+
+//mScene.findChild(imat);
+//mScene.detachChild(mEnemySprite);
+				
 	}
 
 	public void destroyBullet() {
@@ -762,6 +907,7 @@ public class BotWars extends BaseGameActivity {
 					.getPhysicsConnectorManager().findPhysicsConnectorByShape(
 							mBulletSprite));
 			mScene.detachChild(mBulletSprite);
+			bulletPresent = false;
 		}
 	}
 private void spawnPlayer(){
@@ -779,23 +925,27 @@ private void spawnPlayer(){
 			mPlayerSprite, mPlayerBody, true, false));
 
 }
-
+private int enemyCount=0;
 public void spawnEnemy(int xLoc) {
-	
+	enemyCount++;
 	mEnemySprite = new AnimatedSprite(mapOffset+100*xLoc,0,mEnemyTextureRegion);
 
 	FixtureDef mEnemyFixtureDef = PhysicsFactory.createFixtureDef(0, 0f,
 			0f, false, CATEGORYBIT_ENEMY, MASKBITS_ENEMY, (short) 0);
 
-	Body mEnemyBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld,
+	Body mEnemyBody =PhysicsFactory.createBoxBody(this.mPhysicsWorld,
 			mEnemySprite, BodyType.DynamicBody, mEnemyFixtureDef);
-	mEnemyBody.setUserData("enemy"+xLoc);
+	mEnemyBody.setUserData("enemy"+enemyCount);
 	this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(
 			mEnemySprite, mEnemyBody, true, true));
+	mEnemySprite.setUserData("enemy"+enemyCount);
+	
+	
 	mScene.attachChild(mEnemySprite);
+	mEnemySprite.animate(100);
 }
 	private void initCharacters() {
-for(int i=1;i<=2;i++){spawnEnemy(i);}
+for(int i=1;i<=10;i++){spawnEnemy(i);}
 		//for(int i=1;i<=10;i++)
 	//{spawnMultiBullet(i);}
 spawnPlayer();
@@ -812,10 +962,10 @@ spawnPlayer();
 							@Override
 							public void onTimePassed(
 									final TimerHandler pTimerHandler) {
-
+								for(IEntity pEnemy:mEntityList){if(pEnemy.getUserData()!=null){if(pEnemy.getUserData().toString().contains("enemy")){
 								Body EnemyBody = mPhysicsWorld
 										.getPhysicsConnectorManager()
-										.findBodyByShape(mEnemySprite);
+										.findBodyByShape((IShape)pEnemy);
 								if(EnemyBody!=null)
 								{if (dir % 2 == 0 && isLanded) {
 									EnemyBody.setLinearVelocity(
@@ -832,9 +982,9 @@ spawnPlayer();
 									EnemyBody.setLinearVelocity(
 											-mLinearVelocityX, 0);
 								}
-
-								dir++;
 								}
+								dir++;
+								}}}
 								// Random Position Generator
 								// final float xPos = MathUtils.random(30.0f,
 								// (CAMERA_WIDTH - 30.0f));
@@ -844,6 +994,16 @@ spawnPlayer();
 								// createSprite(xPos, yPos);
 							}
 						}));
+	}
+	
+    public  static void enableMusic(boolean m )
+    {enableMusic=m;}
+    
+    public static void enableSounds(boolean s )
+    {enableSounds=s;}
+	public static void setMusicVolume(float vol)
+	{
+		mVolume=vol;
 	}
 	// ===========================================================
 	// Inner and Anonymous Classes

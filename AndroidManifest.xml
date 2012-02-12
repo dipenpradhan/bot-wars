@@ -25,10 +25,11 @@
  </intent-filter>
  </activity>
     
-<activity android:name="StartMenu">
+<activity android:name=".GameMenuActivity">
  <intent-filter>
  <category android:name="android.intent.action.DEFAULT"/>
  </intent-filter>
  </activity>
+ <activity android:name="mapViewActivity"> </activity> <activity android:name="SettingActivity"> </activity>
  </application>
 </manifest>

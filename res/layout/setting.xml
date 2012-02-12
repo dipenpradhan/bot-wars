@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_height="fill_parent"
+android:layout_width="fill_parent"
+>
+<TableRow>
+	<TextView
+	    android:id="@+id/txtUserName"
+	android:text="Music:"
+	android:width ="200px"
+	android:layout_marginTop="5dp"
+	/>
+	<ToggleButton
+	 android:id="@+id/sound"
+	android:width="275px"
+	android:layout_marginTop="5dp" />
+  </TableRow>
+
+  <TableRow>
+     <TextView
+         android:id="@+id/txtPassword"
+		android:text="Sound:"
+		android:layout_marginTop="5dp"
+		/>
+
+
+ 		<ToggleButton
+ 		    android:id="@+id/music"
+ 		    android:layout_width="fill_parent"
+ 		    android:layout_marginTop="5dp" />
+
+ 		<!--   android:password="true" -->
+  		
+
+   </TableRow>
+   <TableRow>
+    <TextView 
+        android:text="Volume:"
+        android:layout_marginTop="5dp"
+        android:id="@+id/volume"
+        />
+
+    <SeekBar
+        android:id="@+id/seekBar1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp" />
+    <TextView
+        android:id="@+id/volume_show"
+         android:text="Track Slider" 
+         android:layout_marginTop="10dp"
+         android:layout_marginLeft="5dp" />
+    </TableRow>
+     
+   <TableRow>
+       
+        <TextView
+            android:id="@+id/txv_veloc"
+              android:text="Game Speed:"
+              android:layout_marginTop="5dp"
+            />
+            <!--  android:layout_marginTop="5dp" -->
+         
+        <SeekBar
+        android:id="@+id/velocity"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp" />
+        
+         <TextView
+             android:id="@+id/velocity_show"
+         android:text="Track Slider" 
+         android:layout_marginTop="10dp"
+         android:layout_marginLeft="5dp" />
+        
+        </TableRow>
+        <TableRow>
+        
+        <TextView
+            android:id="@+id/impluse"
+              android:text="Impulse:"
+              android:layout_marginTop="5dp"
+            />
+            <!--  android:layout_marginTop="5dp" -->
+
+       <SeekBar
+        android:id="@+id/impluse1"
+        android:layout_width="fill_parent"
+        android:layout_marginTop="5dp"
+        android:layout_height="wrap_content" />
+       
+        <TextView
+            android:id="@+id/implusetext"
+         android:text="Track Slider" 
+         android:layout_marginTop="10dp"
+         android:layout_marginLeft="5dp" />
+       </TableRow>
+       
+    <TableRow>
+        <TextView></TextView>
+   </TableRow>
+
+    <Button
+        android:id="@+id/save"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="SAVE" />
+
+</TableLayout>
