@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_height="fill_parent"
+android:layout_width="fill_parent"
+>
+<TableRow>
+
+	<TextView
+	    android:id="@+id/txv_music"
+	    android:layout_marginTop="5dp"
+	    android:text="@string/str_settingsmenu_music"
+	    android:width="200px" />
+
+	<ToggleButton
+	 android:id="@+id/togglebtn_music"
+	android:width="275px"
+	android:layout_marginTop="5dp" />
+  </TableRow>
+
+  <TableRow>
+
+     <TextView
+         android:id="@+id/txv_sound"
+         android:layout_marginTop="5dp"
+         android:text="@string/str_settingsmenu_sound" />
+
+ 		<ToggleButton
+ 		    android:id="@+id/togglebtn_sound"
+ 		    android:layout_width="fill_parent"
+ 		    android:layout_marginTop="5dp" />
+
+ 		<!--   android:password="true" -->
+  		
+
+   </TableRow>
+   <TableRow>
+
+    <TextView
+        android:id="@+id/txv_volume"
+        android:layout_marginTop="5dp"
+        android:text="@string/str_settingsmenu_volume" />
+
+    <SeekBar
+        android:id="@+id/seekbar_volume"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp" />
+    <TextView
+        android:id="@+id/txv_volume_value"
+         android:text="Move slider to adjust" 
+         android:layout_marginTop="10dp"
+         android:layout_marginLeft="5dp" />
+    </TableRow>
+     
+   <TableRow>
+       
+        <TextView
+            android:id="@+id/txv_velocity"
+            android:layout_marginTop="5dp"
+            android:text="@string/str_settingsmenu_playervelocity" />
+
+            <!--  android:layout_marginTop="5dp" -->
+         
+        <SeekBar
+        android:id="@+id/seekbar_velocity"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp" />
+        
+         <TextView
+             android:id="@+id/txv_velocity_value"
+         android:text="Move slider to adjust " 
+         android:layout_marginTop="10dp"
+         android:layout_marginLeft="5dp" />
+        
+        </TableRow>
+        <TableRow>
+        
+        <TextView
+            android:id="@+id/txv_impluse"
+            android:layout_marginTop="5dp"
+            android:text="@string/str_settingsmenu_playerimpulse" />
+
+            <!--  android:layout_marginTop="5dp" -->
+
+       <SeekBar
+        android:id="@+id/seekbar_impulse"
+        android:layout_width="fill_parent"
+        android:layout_marginTop="5dp"
+        android:layout_height="wrap_content" />
+       
+        <TextView
+            android:id="@+id/txv_impulse_value"
+         android:text="Move slider to adjust" 
+         android:layout_marginTop="10dp"
+         android:layout_marginLeft="5dp" />
+       </TableRow>
+       
+    <TableRow>
+        <TextView></TextView>
+   </TableRow>
+
+    <Button
+        android:id="@+id/btn_save"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/str_settingsmenu_save" />
+
+</TableLayout>

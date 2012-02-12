@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="fill_parent"
+  android:layout_height="fill_parent"> 
+ 
+    <ImageView
+        android:id="@+id/imgv_menuBG"
+        android:src="@drawable/startmenu_bg"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />  
+
+   <LinearLayout
+       android:layout_width="fill_parent"
+       android:layout_height="fill_parent"
+       android:layout_margin="10dp"
+       android:gravity="left"
+       android:orientation="vertical" >
+         
+       <TextView
+           android:id="@+id/txv_title"
+           style="@style/MenuFont"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_gravity="left"
+           android:layout_weight="0.5"
+           android:text="@string/str_startmenu_title"
+           android:textSize="45dp" />
+       
+      <TextView
+          android:id="@+id/txv_start"
+          style="@style/MenuFont"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_gravity="right"
+          android:text="@string/str_startmenu_start" />
+
+       <TextView
+           android:id="@+id/txv_quick"
+           style="@style/MenuFont"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_gravity="right"
+           android:text="@string/str_startmenu_quick" />
+
+        <TextView
+            android:id="@+id/txv_settings"
+            style="@style/MenuFont"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:text="@string/str_startmenu_settings" />
+
+       <TextView
+           android:id="@+id/txv_about"
+           style="@style/MenuFont"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_gravity="right"
+           android:text="@string/str_startmenu_about" />
+
+        <TextView
+            android:id="@+id/txv_exit"
+            style="@style/MenuFont"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:text="@string/str_startmenu_exit" />
+        
+    </LinearLayout>
+</RelativeLayout>

@@ -58,6 +58,7 @@ import org.anddev.andengine.util.MathUtils;
 import android.content.Intent;
 import android.hardware.SensorManager;
 import android.media.ExifInterface;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -467,6 +468,12 @@ if(enableMusic){
 					mPhysicsWorld.destroyBody(pPlayerBody);
 					mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mPlayerSprite));
 					mScene.detachChild(mPlayerSprite);
+					
+					Intent StartIntent = new Intent(BotWars.this, StartMenu.class);
+					startActivity(StartIntent);
+					
+					finish();
+					
 				}
 			reduceHealth=false;}	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			
@@ -625,7 +632,7 @@ if(enableMusic){
 									mPlayerBody.getLinearVelocity().y);
 							mPlayerSprite.animate(player_duration, 0, 6, false);
 						
-							mSound.play();
+							if(enableSounds)mSound.play();
 							playerDir=-1;
 						} else if (pValueX == 0) {
 							mPlayerBody.setLinearVelocity(0f,
@@ -772,7 +779,7 @@ if(enableMusic){
 			else if (item.getItemId() == 2) {// return to main menu
 				// onDestroy();
 
-				Intent StartIntent = new Intent(BotWars.this, GameMenuActivity.class);
+				Intent StartIntent = new Intent(BotWars.this, StartMenu.class);
 				startActivity(StartIntent);
 
 				finish();
@@ -814,8 +821,8 @@ if(enableMusic){
 	}
 
 
-	public static void setImpulse(String str) {
-		mImpulseY = Float.parseFloat(str);
+	public static void setImpulse(float impul) {
+		mImpulseY = impul;
 	}
 
 	public static void setVelocity(float str) {
@@ -823,6 +830,8 @@ if(enableMusic){
 	}
 
 	public static void setMap(int mapID) {
+		
+		setScene(mapID);
 		if (mapID == 0) {
 			mapName = "tmx/map_1.tmx";
 			mapOffset = 20;
@@ -845,7 +854,7 @@ if(enableMusic){
 			mapBG = "tmx/scn_dark.png";
 		}
 		if (sceneID == 2) {
-			mapBG = "tmx/scn_island.png";
+			mapBG = "tmx/scn_sunset.png";
 		}
 		if (sceneID == 3) {
 			mapBG = "tmx/scn_underground.png";
@@ -1005,6 +1014,23 @@ spawnPlayer();
 	{
 		mVolume=vol;
 	}
+	
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event)  {
+	    if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+
+			Intent openStartMenu = new Intent(BotWars.this,StartMenu.class);
+			startActivity(openStartMenu);
+
+	    	finish();
+	       // do something on back.
+	        return true;
+	    }
+
+	    return super.onKeyDown(keyCode, event);
+	}
+
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================

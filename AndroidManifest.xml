@@ -9,7 +9,7 @@
 	
     <application
         android:icon="@drawable/bot_img_1"
-        android:label="@string/app_name" >
+        android:label="@string/app_name" android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
          <activity
             android:name=".SplashScreen"
             android:label="@string/app_name" >
@@ -25,11 +25,11 @@
  </intent-filter>
  </activity>
     
-<activity android:name=".GameMenuActivity">
+<activity android:name=".StartMenu">
  <intent-filter>
  <category android:name="android.intent.action.DEFAULT"/>
  </intent-filter>
  </activity>
- <activity android:name="mapViewActivity"> </activity> <activity android:name="SettingActivity"> </activity>
+ <activity android:name=".MapMenu"> </activity> <activity android:name=".SettingsMenu"> </activity>
  </application>
 </manifest>
