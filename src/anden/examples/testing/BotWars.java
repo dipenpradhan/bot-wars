@@ -937,7 +937,7 @@ private void spawnPlayer(){
 private int enemyCount=0;
 public void spawnEnemy(int xLoc) {
 	enemyCount++;
-	mEnemySprite = new AnimatedSprite(mapOffset+100*xLoc,0,mEnemyTextureRegion);
+	mEnemySprite = new AnimatedSprite(mapOffset+150*xLoc,0,mEnemyTextureRegion);
 
 	FixtureDef mEnemyFixtureDef = PhysicsFactory.createFixtureDef(0, 0f,
 			0f, false, CATEGORYBIT_ENEMY, MASKBITS_ENEMY, (short) 0);
@@ -954,7 +954,7 @@ public void spawnEnemy(int xLoc) {
 	mEnemySprite.animate(100);
 }
 	private void initCharacters() {
-for(int i=1;i<=10;i++){spawnEnemy(i);}
+for(int i=1;i<=20;i++){spawnEnemy(i);}
 		//for(int i=1;i<=10;i++)
 	//{spawnMultiBullet(i);}
 spawnPlayer();
@@ -963,36 +963,51 @@ spawnPlayer();
 	private int dir = 0;
 
 	private void createEnemyWalkTimeHandler() {
-		TimerHandler enemyWalkTimerHandler;
+		final TimerHandler enemyWalkTimerHandler;
 
 		this.getEngine().registerUpdateHandler(
-				enemyWalkTimerHandler = new TimerHandler(4, true,
+				enemyWalkTimerHandler = new TimerHandler(2, true,
 						new ITimerCallback() {
 							@Override
 							public void onTimePassed(
 									final TimerHandler pTimerHandler) {
+								dir++;
 								for(IEntity pEnemy:mEntityList){if(pEnemy.getUserData()!=null){if(pEnemy.getUserData().toString().contains("enemy")){
 								Body EnemyBody = mPhysicsWorld
 										.getPhysicsConnectorManager()
 										.findBodyByShape((IShape)pEnemy);
 								if(EnemyBody!=null)
-								{if (dir % 2 == 0 && isLanded) {
-									EnemyBody.setLinearVelocity(
-											mLinearVelocityX, 0);
-									EnemyBody.applyLinearImpulse(0, -10,
-											mPlayerBody.getPosition().x,
-											mPlayerBody.getPosition().y);
+								{if (dir%2==0) {
+									
+									EnemyBody.applyLinearImpulse(0,-7,
+											EnemyBody.getPosition().x,
+											EnemyBody.getPosition().y);
+									EnemyBody.applyLinearImpulse(7,0,
+											EnemyBody.getPosition().x,
+											EnemyBody.getPosition().y);
+									
+									//EnemyBody.setLinearVelocity(
+										//	mLinearVelocityX, 0);
+									Debug.d("right jump");
+									
 								}
+								if (dir%2!=0) {
+									EnemyBody.applyLinearImpulse(0, -7,
+											EnemyBody.getPosition().x,
+											EnemyBody.getPosition().y);
+									EnemyBody.applyLinearImpulse(-7, 0,
+											EnemyBody.getPosition().x,
+											EnemyBody.getPosition().y);
 
-								if (dir % 2 != 0) {
-									EnemyBody.applyLinearImpulse(0, -10,
-											mPlayerBody.getPosition().x,
-											mPlayerBody.getPosition().y);
-									EnemyBody.setLinearVelocity(
-											-mLinearVelocityX, 0);
+									//
+									//EnemyBody.setLinearVelocity(
+										//	-mLinearVelocityX, 0);
+									Debug.d("left jump");
+									
 								}
+								
 								}
-								dir++;
+								
 								}}}
 								// Random Position Generator
 								// final float xPos = MathUtils.random(30.0f,
@@ -1001,7 +1016,7 @@ spawnPlayer();
 								// (CAMERA_HEIGHT - 30.0f));
 
 								// createSprite(xPos, yPos);
-							}
+								}
 						}));
 	}
 	

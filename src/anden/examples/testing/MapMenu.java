@@ -43,7 +43,8 @@ public class MapMenu  extends Activity{
         public void onItemClick(AdapterView<?> parent,
         View v, int position, long id)
         {if(position<3)
-       {BotWars.setMap(position);
+       {
+        BotWars.setMap(position);
         Intent StartIntent = new Intent(MapMenu.this, BotWars.class);
 		startActivity(StartIntent);
 		finish();
