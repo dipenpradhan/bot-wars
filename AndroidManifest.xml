@@ -30,6 +30,6 @@
  <category android:name="android.intent.action.DEFAULT"/>
  </intent-filter>
  </activity>
- <activity android:name=".MapMenu"> </activity> <activity android:name=".SettingsMenu"> </activity>
+ <activity android:name=".MapMenu"> </activity> <activity android:name="botwars.main.SettingsMenu"> </activity>
  </application>
 </manifest>
