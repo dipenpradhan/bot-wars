@@ -37,7 +37,7 @@ public class SplashScreen extends BaseSplashActivity {
 	@Override
 	protected Class<? extends Activity> getFollowUpActivity() {
 		// TODO Auto-generated method stub
-		return StartMenu.class;
+return StartMenu.class;
 	}
 
 	@Override

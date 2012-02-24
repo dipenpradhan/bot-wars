@@ -1,6 +1,6 @@
 package botwars.main;
 
-import anden.examples.testing.R;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -9,9 +9,6 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
-//import android.view.animation.Animation;
-//import android.view.animation.AnimationUtils;
-//import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 

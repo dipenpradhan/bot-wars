@@ -35,6 +35,7 @@ import org.anddev.andengine.entity.shape.IShape;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.entity.util.FPSLogger;
+
 import org.anddev.andengine.extension.physics.box2d.PhysicsConnector;
 import org.anddev.andengine.extension.physics.box2d.PhysicsFactory;
 import org.anddev.andengine.extension.physics.box2d.PhysicsWorld;
@@ -47,8 +48,6 @@ import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
-
-import anden.examples.testing.R;
 import android.content.Intent;
 import android.hardware.SensorManager;
 import android.view.KeyEvent;
@@ -193,6 +192,9 @@ public class BotWars extends BaseGameActivity {
 				mCamera);
 		engineOptions.getTouchOptions().setRunOnUpdateThread(true);
 		engineOptions.setNeedsMusic(true).setNeedsSound(true);
+		
+	
+		
 		return new Engine(engineOptions);
 
 	}
@@ -734,12 +736,12 @@ public class BotWars extends BaseGameActivity {
 	private void destroyEnemy(String bodyName){
 		
 	
-		for (IEntity pEnemy : mEntityList) {
-			if (pEnemy.getUserData() != null) {
-				if (pEnemy.getUserData().toString().equalsIgnoreCase(bodyName)){
-					mScene.detachChild(pEnemy);
-					mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape((IShape) pEnemy));
-					mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape((IShape) pEnemy));
+		for (IEntity pEntity : mEntityList) {
+			if (pEntity.getUserData() != null) {
+				if (pEntity.getUserData().toString().equalsIgnoreCase(bodyName)){
+					mScene.detachChild(pEntity);
+					mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape((IShape) pEntity));
+					mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape((IShape) pEntity));
 				}
 			}
 		}

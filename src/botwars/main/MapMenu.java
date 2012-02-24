@@ -1,6 +1,5 @@
 package botwars.main;
 
-import anden.examples.testing.R;
 import android.app.Activity;
 import android.os.Bundle;
 
