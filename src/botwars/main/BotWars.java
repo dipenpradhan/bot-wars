@@ -10,6 +10,7 @@ import org.anddev.andengine.audio.music.MusicFactory;
 import org.anddev.andengine.audio.sound.Sound;
 import org.anddev.andengine.audio.sound.SoundFactory;
 import org.anddev.andengine.engine.Engine;
+import org.anddev.andengine.engine.camera.Camera;
 import org.anddev.andengine.engine.camera.SmoothCamera;
 import org.anddev.andengine.engine.camera.hud.HUD;
 import org.anddev.andengine.engine.camera.hud.controls.BaseOnScreenControl;
@@ -36,6 +37,9 @@ import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.entity.util.FPSLogger;
 
+import org.anddev.andengine.extension.input.touch.controller.MultiTouch;
+import org.anddev.andengine.extension.input.touch.controller.MultiTouchController;
+import org.anddev.andengine.extension.input.touch.exception.MultiTouchException;
 import org.anddev.andengine.extension.physics.box2d.PhysicsConnector;
 import org.anddev.andengine.extension.physics.box2d.PhysicsFactory;
 import org.anddev.andengine.extension.physics.box2d.PhysicsWorld;
@@ -183,6 +187,40 @@ public class BotWars extends BaseGameActivity {
 	// Methods for/from SuperClass/Interfaces
 	// ===========================================================
 
+	
+	
+
+	@Override
+	public Engine onLoadEngine() {
+		
+		this.mCamera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, 200, 200, 1.0f);
+
+		final EngineOptions engineOptions = new EngineOptions(true, ScreenOrientation.LANDSCAPE, new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT),
+				mCamera);
+		engineOptions.getTouchOptions().setRunOnUpdateThread(true);
+		engineOptions.setNeedsMusic(true).setNeedsSound(true);
+
+		final Engine engine = new Engine(engineOptions);
+
+		try {
+			if(MultiTouch.isSupported(this)) {
+				engine.setTouchController(new MultiTouchController());
+				if(MultiTouch.isSupportedDistinct(this)) {
+					
+				} else {
+					Toast.makeText(this, "(MultiTouch detected,but your device might have problems to distinguish between separate fingers.)", Toast.LENGTH_LONG).show();
+				}
+			} else {
+				Toast.makeText(this, "Sorry your device does NOT support MultiTouch!\n\n(Falling back to SingleTouch.)", Toast.LENGTH_LONG).show();
+			}
+		} catch (final MultiTouchException e) {
+			Toast.makeText(this, "Sorry your Android Version does NOT support MultiTouch!\n\n(Falling back to SingleTouch.)", Toast.LENGTH_LONG).show();
+		}
+
+		return engine;
+	}
+	
+	/*
 	@Override
 	public Engine onLoadEngine() {
 
@@ -192,12 +230,11 @@ public class BotWars extends BaseGameActivity {
 				mCamera);
 		engineOptions.getTouchOptions().setRunOnUpdateThread(true);
 		engineOptions.setNeedsMusic(true).setNeedsSound(true);
-		
-	
+
 		
 		return new Engine(engineOptions);
 
-	}
+	}*/
 
 	@Override
 	public void onLoadResources() {
