@@ -1,6 +1,5 @@
 package botwars.main;
 
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -14,17 +13,18 @@ import android.widget.Toast;
 
 public class StartMenu extends Activity implements OnClickListener {
 	/** Called when the activity is first created. */
-	public static boolean settingsChanged=false;
+	public static boolean settingsChanged = false;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		if(!settingsChanged){ //BotWars.setMap(1);
-        BotWars.setVelocity(8.0f);
-        BotWars.setImpulse(14.0f);
-        BotWars.setMusicVolume(1.0f);
-        BotWars.enableMusic(true);
-        BotWars.enableSounds(true);
+		if (!settingsChanged) { // BotWars.setMap(1);
+			BotWars.setVelocity(8.0f);
+			BotWars.setImpulse(14.0f);
+			BotWars.setMusicVolume(1.0f);
+			BotWars.enableMusic(true);
+			BotWars.enableSounds(true);
 		}
-		//settingsChanged=false;
+		// settingsChanged=false;
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.startmenu);
 
@@ -57,7 +57,8 @@ public class StartMenu extends Activity implements OnClickListener {
 		txv_about.setOnClickListener(this);
 		txv_exit.setOnClickListener(this);
 
-		//Toast.makeText(this, "Press Menu to Start Game", Toast.LENGTH_LONG).show();
+		// Toast.makeText(this, "Press Menu to Start Game",
+		// Toast.LENGTH_LONG).show();
 
 	}
 
@@ -70,8 +71,11 @@ public class StartMenu extends Activity implements OnClickListener {
 			finish();
 			break;
 		case R.id.txv_quick:
-			Toast.makeText(getBaseContext(), "Feature under construction",
-						Toast.LENGTH_LONG).show();
+			// Toast.makeText(getBaseContext(), "Feature under construction",
+			// Toast.LENGTH_LONG).show();
+			makeModeDialog();
+
+			//finish();
 			break;
 		case R.id.txv_settings:
 			Intent openSettingsMenu = new Intent(this, SettingsMenu.class);
@@ -94,26 +98,46 @@ public class StartMenu extends Activity implements OnClickListener {
 
 		aboutDialog.setMessage("This Game has been made by Dipen,Gaurav & Mayuresh");
 
-		aboutDialog.setPositiveButton("Ok",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface arg0, int arg1) {
-						//Toast.makeText(getBaseContext(), "BUY IT",
-							//	Toast.LENGTH_LONG).show();
-					}
-				});
+		aboutDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface arg0, int arg1) {
+				// Toast.makeText(getBaseContext(), "BUY IT",
+				// Toast.LENGTH_LONG).show();
+			}
+		});
 
-		aboutDialog.setNegativeButton("Close",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface arg0, int arg1) {
-					}
-				});
+		aboutDialog.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface arg0, int arg1) {
+			}
+		});
 
 		aboutDialog.show();
 	}
-public static void settingsChanged()
-{
-	settingsChanged=true;
-}
+
+	private void makeModeDialog() {
+
+		AlertDialog.Builder modeDialog = new AlertDialog.Builder(this);
+
+		modeDialog.setMessage("Select Mode");
+
+		modeDialog.setPositiveButton("Server", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface arg0, int arg1) {
+
+			}
+		});
+
+		modeDialog.setNegativeButton("Client", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface arg0, int arg1) {
+				Intent openMP_BotWars = new Intent(StartMenu.this, MP_Client_BotWars.class);
+				startActivity(openMP_BotWars);
+			}
+		});
+
+		modeDialog.show();
+	}
+
+	public static void settingsChanged() {
+		settingsChanged = true;
+	}
 	// ImageView imageView= (ImageView)findViewById(R.id.imageview);
 	// Animation fadeInAnimation = AnimationUtils.loadAnimation(this,
 	// R.layout.anim);

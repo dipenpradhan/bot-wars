@@ -1,5 +1,7 @@
 package botwars.main;
 
+
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -10,7 +12,6 @@ import org.anddev.andengine.audio.music.MusicFactory;
 import org.anddev.andengine.audio.sound.Sound;
 import org.anddev.andengine.audio.sound.SoundFactory;
 import org.anddev.andengine.engine.Engine;
-import org.anddev.andengine.engine.camera.Camera;
 import org.anddev.andengine.engine.camera.SmoothCamera;
 import org.anddev.andengine.engine.camera.hud.HUD;
 import org.anddev.andengine.engine.camera.hud.controls.BaseOnScreenControl;
@@ -31,6 +32,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
+import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.anddev.andengine.entity.scene.background.RepeatingSpriteBackground;
 import org.anddev.andengine.entity.shape.IShape;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
@@ -44,6 +46,9 @@ import org.anddev.andengine.extension.physics.box2d.PhysicsConnector;
 import org.anddev.andengine.extension.physics.box2d.PhysicsFactory;
 import org.anddev.andengine.extension.physics.box2d.PhysicsWorld;
 import org.anddev.andengine.input.touch.TouchEvent;
+import org.anddev.andengine.input.touch.detector.ScrollDetector;
+import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
+import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -52,6 +57,8 @@ import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
+
+
 import android.content.Intent;
 import android.hardware.SensorManager;
 import android.view.KeyEvent;
@@ -68,14 +75,15 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
-
+import org.anddev.andengine.extension.input.touch.detector.PinchZoomDetector;
+import org.anddev.andengine.extension.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
 /**
  * (c) 2010 Nicolas Gramlich (c) 2011 Zynga
  * 
  * @author Nicolas Gramlich
  * @since 00:06:23 - 11.07.2010
  */
-public class BotWars extends BaseGameActivity {
+public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListener,IOnSceneTouchListener,IScrollDetectorListener {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -174,6 +182,10 @@ public class BotWars extends BaseGameActivity {
 	private Rectangle rect;
 	private int enemyCount = 0;
 	
+	
+	private PinchZoomDetector mPinchZoomDetector;
+	private float mPinchZoomStartedCameraZoomFactor;
+	private SurfaceScrollDetector mScrollDetector;
 	// private Body collBody1,collBody2;
 	// ===========================================================
 	// Constructors
@@ -208,7 +220,7 @@ public class BotWars extends BaseGameActivity {
 				if(MultiTouch.isSupportedDistinct(this)) {
 					
 				} else {
-					Toast.makeText(this, "(MultiTouch detected,but your device might have problems to distinguish between separate fingers.)", Toast.LENGTH_LONG).show();
+					Toast.makeText(this, "(MultiTouch detected, but your device might have problems to distinguish between separate fingers.)", Toast.LENGTH_LONG).show();
 				}
 			} else {
 				Toast.makeText(this, "Sorry your device does NOT support MultiTouch!\n\n(Falling back to SingleTouch.)", Toast.LENGTH_LONG).show();
@@ -248,6 +260,8 @@ public class BotWars extends BaseGameActivity {
 		loadControls();
 		loadSounds();
 		loadMap();
+		
+		
 	}
 
 
@@ -294,7 +308,10 @@ public class BotWars extends BaseGameActivity {
 
 		for (int i = 0; i < mScene.getChildCount(); i++)
 			mEntityList.add(mScene.getChild(i));
-
+		this.mScrollDetector = new SurfaceScrollDetector(this);
+		
+		this.mScrollDetector.setEnabled(false);
+		createPinchZoomDetector();
 		return mScene;
 	}
 
@@ -388,11 +405,12 @@ public class BotWars extends BaseGameActivity {
 	}
 
 	private void createGameUpdateHandler() {
+	
 		gameUpdater = new IUpdateHandler() {
 
 			public void onUpdate(float pSecondsElapsed) {
 
-
+				
 				final Body pEnemyBody = mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(mEnemySprite);
 
 				final Body pPlayerBody = mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(mPlayerSprite);
@@ -466,7 +484,7 @@ public class BotWars extends BaseGameActivity {
 					reduceHealth = false;
 				} // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-				mCamera.setCenter(mPlayerSprite.getX(), mPlayerSprite.getY());
+				if(!mScrollDetector.isEnabled())mCamera.setCenter(mPlayerSprite.getX(), mPlayerSprite.getY());
 			}
 
 			@Override
@@ -704,6 +722,8 @@ public class BotWars extends BaseGameActivity {
 
 			else if (item.getItemId() == 0) {// resume
 				mEngine.start();
+				
+		    	
 				Toast.makeText(this, "Resume", 100).show();
 
 			} else if (item.getItemId() == 1) {// pause
@@ -939,6 +959,77 @@ bulletCount++;
 		return super.onKeyDown(keyCode, event);
 	}
 
+
+        public void createPinchZoomDetector()
+        {
+        	if(MultiTouch.isSupportedByAndroidVersion()) {
+    			try {
+    				this.mPinchZoomDetector = new PinchZoomDetector(this);
+    				Debug.d("pincher");
+    			} catch (final MultiTouchException e) {
+    				this.mPinchZoomDetector = null;
+    			}
+    		} else {
+    			this.mPinchZoomDetector = null;
+    		}
+    		this.mScene.setOnSceneTouchListener(this);
+    		this.mScene.setTouchAreaBindingEnabled(true);
+
+        }
+
+        @Override
+        public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
+			this.mPinchZoomStartedCameraZoomFactor = this.mCamera.getZoomFactor();
+			Debug.d("zoomstart");
+		}
+        
+        @Override
+        public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+        	this.mCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+			Debug.d("zoomia");
+		}
+
+		@Override
+		public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+			this.mCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+			
+		}
+
+		@Override
+		public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
+			if(this.mPinchZoomDetector != null) {
+				this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
+
+				if(this.mPinchZoomDetector.isZooming()) {
+					this.mScrollDetector.setEnabled(false);
+				} else {
+					if(pSceneTouchEvent.isActionDown()) {
+						this.mScrollDetector.setEnabled(true);
+						
+					}
+					
+						if(pSceneTouchEvent.isActionUp()) {
+							this.mScrollDetector.setEnabled(false);
+							
+						}
+						
+					this.mScrollDetector.onTouchEvent(pSceneTouchEvent);
+				}
+			} else {
+				this.mScrollDetector.onTouchEvent(pSceneTouchEvent);
+			}
+return true;
+		}
+
+		@Override
+		public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent, final float pDistanceX, final float pDistanceY) {
+			final float zoomFactor = this.mCamera.getZoomFactor();
+			this.mCamera.offsetCenter(-pDistanceX / zoomFactor*10, -pDistanceY / zoomFactor*10);
+		}
+
+		
+                
+    
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================

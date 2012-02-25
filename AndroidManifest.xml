@@ -6,6 +6,7 @@
 
     <uses-sdk android:minSdkVersion="6" />
 	<uses-permission android:name="android.permission.WAKE_LOCK"/>
+	<uses-permission android:name="android.permission.INTERNET"></uses-permission> 
 	
     <application
         android:icon="@drawable/bot_img_1"
@@ -25,6 +26,14 @@
  </intent-filter>
  </activity>
     
+        <activity android:name=".MP_Client_BotWars">
+ <intent-filter>
+ <category android:name="android.intent.action.DEFAULT"/>
+ </intent-filter>
+ </activity>
+    
+            
+        
 <activity android:name=".StartMenu">
  <intent-filter>
  <category android:name="android.intent.action.DEFAULT"/>
