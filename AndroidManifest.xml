@@ -32,6 +32,13 @@
  </intent-filter>
  </activity>
     
+           
+        <activity android:name=".MP_Server_BotWars">
+ <intent-filter>
+ <category android:name="android.intent.action.DEFAULT"/>
+ </intent-filter>
+ </activity>
+    
             
         
 <activity android:name=".StartMenu">
@@ -39,6 +46,7 @@
  <category android:name="android.intent.action.DEFAULT"/>
  </intent-filter>
  </activity>
+  <activity android:name=".MP_MapMenu"> </activity>
  <activity android:name=".MapMenu"> </activity> <activity android:name="botwars.main.SettingsMenu"> </activity>
  </application>
 </manifest>

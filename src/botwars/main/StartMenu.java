@@ -73,8 +73,11 @@ public class StartMenu extends Activity implements OnClickListener {
 		case R.id.txv_quick:
 			// Toast.makeText(getBaseContext(), "Feature under construction",
 			// Toast.LENGTH_LONG).show();
-			makeModeDialog();
-
+			Intent openMP_MapsMenu = new Intent(this, MP_MapMenu.class);
+			startActivity(openMP_MapsMenu);
+			finish();
+		
+			
 			//finish();
 			break;
 		case R.id.txv_settings:
@@ -111,28 +114,6 @@ public class StartMenu extends Activity implements OnClickListener {
 		});
 
 		aboutDialog.show();
-	}
-
-	private void makeModeDialog() {
-
-		AlertDialog.Builder modeDialog = new AlertDialog.Builder(this);
-
-		modeDialog.setMessage("Select Mode");
-
-		modeDialog.setPositiveButton("Server", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface arg0, int arg1) {
-
-			}
-		});
-
-		modeDialog.setNegativeButton("Client", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface arg0, int arg1) {
-				Intent openMP_BotWars = new Intent(StartMenu.this, MP_Client_BotWars.class);
-				startActivity(openMP_BotWars);
-			}
-		});
-
-		modeDialog.show();
 	}
 
 	public static void settingsChanged() {

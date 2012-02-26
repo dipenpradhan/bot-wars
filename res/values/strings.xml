@@ -14,9 +14,9 @@
     
     
     <string name="str_startmenu_title">BoT WaRs</string>
-    <string name="str_startmenu_start">START GAME</string>
+    <string name="str_startmenu_start">SINGLE PLAYER</string>
     <string name="str_startmenu_settings">SETTINGS</string>
-    <string name="str_startmenu_quick">QUICK GAME</string>
+    <string name="str_startmenu_quick">MULTIPLAYER</string>
     <string name="str_startmenu_about">ABOUT</string>
     <string name="str_startmenu_exit">EXIT</string>
 

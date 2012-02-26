@@ -2,6 +2,8 @@ package botwars.main;
 
 
 
+
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -125,7 +127,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 														// textures
 	private TextureRegion mOnScreenControlBaseTextureRegion;
 	private TextureRegion mOnScreenControlKnobTextureRegion;
-	private DigitalOnScreenControl mDigitalOnScreenControl;
+	public DigitalOnScreenControl mDigitalOnScreenControl;
 
 	private BitmapTextureAtlas mHUDTextureAtlas; // atlas for HUD textures
 	private TextureRegion mJumpTextureRegion;
@@ -140,7 +142,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private boolean isLanded = false;
 	private Body mPlayerBody;
 	private RepeatingSpriteBackground mRepeatingSpriteBackground;
-	private Scene mScene;
+	public Scene mScene;
 	private PhysicsWorld mPhysicsWorld;
 	private FixtureDef boxFixtureDef;
 	private AnimatedSprite mPlayerSprite;
@@ -269,7 +271,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	public Scene onLoadScene() {
 
 		this.mEngine.registerUpdateHandler(new FPSLogger());
-		createEnemyWalkTimeHandler();
+		//createEnemyWalkTimeHandler();
 		mScene = new Scene();
 
 		mScene.setBackground(this.mRepeatingSpriteBackground);
@@ -404,7 +406,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	}
 
-	private void createGameUpdateHandler() {
+	public void createGameUpdateHandler() {
 	
 		gameUpdater = new IUpdateHandler() {
 
@@ -429,7 +431,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				
 			
 				if (desEnemy) {
-					if(fix1_name.contains("enemy"))destroyEnemy(fix1_name);//, fix2_name);
+					if(fix1_name.contains("enemy"))destroyEnemy(fix1_name);
 					if(fix2_name.contains("enemy"))destroyEnemy(fix2_name);
 					desEnemy = false;
 				}
@@ -471,7 +473,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 					if (Player_Max_Health <= 0) {
 
-						mPhysicsWorld.destroyBody(pPlayerBody);
+						/*mPhysicsWorld.destroyBody(pPlayerBody);
 						mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mPlayerSprite));
 						mScene.detachChild(mPlayerSprite);
 
@@ -479,7 +481,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 						startActivity(StartIntent);
 
 						finish();
-
+*/
 					}
 					reduceHealth = false;
 				} // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -533,7 +535,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	}
 
-	private void initControls() {
+	public void initControls() {
 
 		HUD mHUD = new HUD();
 
@@ -593,28 +595,16 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				new IOnScreenControlListener() {
 					@Override
 					public void onControlChange(final BaseOnScreenControl pBaseOnScreenControl, final float pValueX, final float pValueY) {
-
+						
 						if (pValueX > 0 && !mPlayerSprite.isAnimationRunning()) {
-							mPlayerSprite.getTextureRegion().setFlippedHorizontal(false);
-							mPlayerBody.setLinearVelocity(mLinearVelocityX, mPlayerBody.getLinearVelocity().y);
-
-							mPlayerSprite.animate(new long[]{50,50,50,50,50,50,50}, 0, 6, false);
-
-							if (enableSounds)
-								mSound.play();
-							playerDir = PLAYER_DIRECTION_RIGHT;
+							movePlayerRight();
+							
 						}
 
 						else if (pValueX < 0 && !mPlayerSprite.isAnimationRunning()) {
-							mPlayerSprite.getTextureRegion().setFlippedHorizontal(true);
-							mPlayerBody.setLinearVelocity(-mLinearVelocityX, mPlayerBody.getLinearVelocity().y);
-							mPlayerSprite.animate(new long[]{50,50,50,50,50,50,50}, 0, 6, false);
-
-							if (enableSounds)
-								mSound.play();
-							playerDir = PLAYER_DIRECTION_LEFT;
+							movePlayerLeft();
 						} else if (pValueX == 0) {
-							mPlayerBody.setLinearVelocity(0f, mPlayerBody.getLinearVelocity().y);
+						doNotMovePlayer();
 
 						}
 
@@ -651,9 +641,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "andrun256.png", 0, 0, 8, 1);
 
-		this.mEnemyTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "banana_tiled.png", 0, 64, 4, 2);
+		this.mEnemyTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "bananaHQ_tiled.png", 0, 64, 4, 2);
 
-		this.mBulletTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "bullet.png", 0, 128, 1, 1);
+		this.mBulletTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "bullet.png", 0, 190, 1, 1);
 
 	}
 
@@ -681,7 +671,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	private void loadSounds() {
 		try {
-			mMusic = MusicFactory.createMusicFromAsset(this.mEngine.getMusicManager(), this, "bg_music.mid");
+			mMusic = MusicFactory.createMusicFromAsset(this.mEngine.getMusicManager(), this, "mi.mp3");
 
 			mMusic.setLooping(true);
 
@@ -695,7 +685,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// TODO Auto-generated method stub
+		
 		super.onCreateOptionsMenu(menu);
 		menu.add(0, 0, 0, R.string.menu_resume);
 		menu.add(0, 1, 0, R.string.menu_pause);
@@ -860,7 +850,7 @@ bulletCount++;
 	public void spawnEnemy(int xLoc) {
 		enemyCount++;
 		mEnemySprite = new AnimatedSprite(mapOffset + 150 * xLoc, 0, mEnemyTextureRegion);
-
+		mEnemySprite.setScale(0.7f);
 		FixtureDef mEnemyFixtureDef = PhysicsFactory.createFixtureDef(0, 0f, 0f, false, CATEGORYBIT_ENEMY, MASKBITS_ENEMY, (short) 0);
 
 		Body mEnemyBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, mEnemySprite, BodyType.DynamicBody, mEnemyFixtureDef);
@@ -1027,9 +1017,60 @@ return true;
 			this.mCamera.offsetCenter(-pDistanceX / zoomFactor*10, -pDistanceY / zoomFactor*10);
 		}
 
+		public void jumpImpulse()
+		{
+			playerDir=PLAYER_DIRECTION_RIGHT;
+			mPlayerBody.applyLinearImpulse(0, -mImpulseY, mPlayerBody.getPosition().x, // /////JUMP
+					mPlayerBody.getPosition().y);
+		}
 		
                 
-    
+		public float getPlayerLocX()
+		{
+			return mPlayerBody.getPosition().x;
+			
+		}
+		public float getPlayerLocY()
+		{
+			return mPlayerBody.getPosition().y;
+			
+		}
+		
+		public void setPlayerLoc(float x, float y)
+		{
+			mPlayerSprite.setPosition(x,y);
+		}
+		
+		public boolean isPlayerMoving=false;
+		public void movePlayerRight()
+		{
+			mPlayerSprite.getTextureRegion().setFlippedHorizontal(false);
+			mPlayerBody.setLinearVelocity(mLinearVelocityX, mPlayerBody.getLinearVelocity().y);
+							
+			mPlayerSprite.animate(new long[]{50,50,50,50,50,50,50}, 0, 6, false);
+
+			if (enableSounds)
+				mSound.play();
+			playerDir = PLAYER_DIRECTION_RIGHT;
+			isPlayerMoving=true;
+		}
+	public void movePlayerLeft()
+	{
+		mPlayerSprite.getTextureRegion().setFlippedHorizontal(true);
+		mPlayerBody.setLinearVelocity(-mLinearVelocityX, mPlayerBody.getLinearVelocity().y);
+		mPlayerSprite.animate(new long[]{50,50,50,50,50,50,50}, 0, 6, false);
+
+		if (enableSounds)
+			mSound.play();
+		playerDir = PLAYER_DIRECTION_LEFT;
+		isPlayerMoving=true;
+	}
+	
+	public void doNotMovePlayer()
+	{	if(isPlayerMoving)
+		{mPlayerBody.setLinearVelocity(0f, mPlayerBody.getLinearVelocity().y);
+		isPlayerMoving=false;}
+	}
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
