@@ -51,7 +51,7 @@ private BufferedReader mBufferedReader;
 		menu.add(0, 4, 0, "Start Receiver Thread");
 		return super.onCreateOptionsMenu(menu);
 	}
-
+/*
 private IUpdateHandler msgRecHandler;
 
 private void createMsgRecHandler(){
@@ -84,7 +84,7 @@ private void createMsgRecHandler(){
 		
 	};
 }
-
+*/
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if (item.getItemId() == 4) {// resume
@@ -106,7 +106,7 @@ private void createMsgRecHandler(){
 			                Debug.d("look: " +msg);
 			                //if(str.contains("jump")){jumpImpulse();} 
 			                if(msgArray[0].contains("jump")){jumpImpulse();}	
-			                if(msgArray[0].equalsIgnoreCase("right")){Debug.d("MOVING RIGHT/////////////////////");movePlayerRight();}
+			                if(msgArray[0].equalsIgnoreCase("right")){movePlayerRight();}
 			                if(msgArray[0].equalsIgnoreCase("left")){movePlayerLeft();}
 			                if(msgArray[0].equalsIgnoreCase("stop")){doNotMovePlayer();}}
 					} catch (IOException e) {

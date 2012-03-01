@@ -167,7 +167,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	public float Player_Max_Health = 100.0f;
 
-	public float Player_Health_Reduce = 20.0f;
+	public float Player_Health_Reduce = 5.0f;
 
 	private AnimatedSprite mHealthSprite;
 	private ContactListener collisionListener;
@@ -271,7 +271,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	public Scene onLoadScene() {
 
 		this.mEngine.registerUpdateHandler(new FPSLogger());
-		//createEnemyWalkTimeHandler();
+		createEnemyWalkTimeHandler();
 		mScene = new Scene();
 
 		mScene.setBackground(this.mRepeatingSpriteBackground);
@@ -310,6 +310,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		for (int i = 0; i < mScene.getChildCount(); i++)
 			mEntityList.add(mScene.getChild(i));
+		
+		
+		
 		this.mScrollDetector = new SurfaceScrollDetector(this);
 		
 		this.mScrollDetector.setEnabled(false);
@@ -342,7 +345,14 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 					fix2_name = "";
 				}
 
-				isLanded = true;
+				
+				
+				if((fix1_name.contains("player")&&fix2_name.contains("wall"))||(fix2_name.contains("player")&&fix1_name.contains("wall")))
+					isLanded = true;
+				
+				if((fix1_name.contains("player")&&fix2_name.contains("enemy"))||(fix2_name.contains("player")&&fix1_name.contains("enemy")))
+					isLanded=true;
+				
 				// Debug.d("BeginContact");
 
 				if (mBulletSprite != null && mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mBulletSprite) != null
@@ -357,8 +367,8 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 				}
 
-				if ((fix1_name.equalsIgnoreCase("player") && fix2_name.contains("enemy"))
-						|| (fix2_name.equalsIgnoreCase("player") && fix1_name.contains("enemy"))) {
+				if ((fix1_name.contains("player") && fix2_name.contains("enemy"))
+						|| (fix2_name.contains("player") && fix1_name.contains("enemy"))) {
 					Debug.d("player hits enemy");
 					reduceHealth = true;
 				} else
@@ -473,7 +483,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 					if (Player_Max_Health <= 0) {
 
-						/*mPhysicsWorld.destroyBody(pPlayerBody);
+						mPhysicsWorld.destroyBody(pPlayerBody);
 						mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(mPlayerSprite));
 						mScene.detachChild(mPlayerSprite);
 
@@ -481,7 +491,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 						startActivity(StartIntent);
 
 						finish();
-*/
+
 					}
 					reduceHealth = false;
 				} // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -780,37 +790,59 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		}
 	}
 
-	private void destroyEnemy(String bodyName){
+	private void destroyEnemy(String enemyName){
 		
+	/*
+		for (IEntity pEntity : mEntityList) {
+			if (pEntity.getUserData() != null) {
+				if (pEntity.getUserData().toString().equalsIgnoreCase(bodyName)){
+					mScene.detachChild(pEntity);
+					mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape((IShape) pEntity));
+					mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape((IShape) pEntity));
+				}
+			}
+		}*/
+		
+		mScene.detachChild(findShape(enemyName));
+		mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(enemyName)));
+		mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(findShape(enemyName)));
+		
+	}
+
+	public void destroyBullet(String bulletName) {
+		/*
+		for (IEntity pEntity : mEntityList) {
+			if (pEntity.getUserData() != null) {
+				if (pEntity.getUserData().toString().equalsIgnoreCase(bodyName)){
+					mScene.detachChild(pEntity);
+					
+					mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape((IShape) pEntity));
+					mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape((IShape) pEntity));
+					
+				}
+			}
+		}
+		*/
+		mScene.detachChild(findShape(bulletName));
+		mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(bulletName)));
+		mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(findShape(bulletName)));
+	}
+
 	
+	public IShape findShape(String shapeName)
+	{
+		IShape pShape=null;
 		for (IEntity pEntity : mEntityList) {
 			if (pEntity.getUserData() != null) {
-				if (pEntity.getUserData().toString().equalsIgnoreCase(bodyName)){
-					mScene.detachChild(pEntity);
-					mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape((IShape) pEntity));
-					mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape((IShape) pEntity));
+				if (pEntity.getUserData().toString().equalsIgnoreCase(shapeName)){
+					pShape=(IShape)pEntity;
 				}
 			}
 		}
-		
+		return pShape;
 	}
-
-	public void destroyBullet(String bodyName) {
-		
-		for (IEntity pEntity : mEntityList) {
-			if (pEntity.getUserData() != null) {
-				if (pEntity.getUserData().toString().equalsIgnoreCase(bodyName)){
-					mScene.detachChild(pEntity);
-					
-					mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape((IShape) pEntity));
-					mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape((IShape) pEntity));
-					
-				}
-			}
-		}
-		
-	}
-
+	
+	
 	public void spawnBullet() {
 bulletCount++;
 		mBulletSprite = new AnimatedSprite(mPlayerSprite.getX() + playerDir, mPlayerSprite.getY()
@@ -832,15 +864,16 @@ bulletCount++;
 		bulletPresent = true;
 		mEntityList.add(mBulletSprite);
 	}
-
+private int playerCount=0;
 	private void spawnPlayer() {
-
+		
+		playerCount++;
 		mPlayerSprite = new AnimatedSprite(mapOffset, 0, this.mPlayerTextureRegion);
 
 		final FixtureDef mPlayerFixtureDef = PhysicsFactory.createFixtureDef(0, 0f, 0f, false, CATEGORYBIT_PLAYER, MASKBITS_PLAYER, (short) 0);
 
 		mPlayerBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, mPlayerSprite, BodyType.DynamicBody, mPlayerFixtureDef);
-		mPlayerBody.setUserData("player");
+		mPlayerBody.setUserData("player"+playerCount);
 		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(mPlayerSprite, mPlayerBody, true, false));
 
 	}
