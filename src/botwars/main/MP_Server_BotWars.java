@@ -11,8 +11,13 @@ import java.net.UnknownHostException;
 import org.anddev.andengine.engine.camera.hud.controls.BaseOnScreenControl;
 import org.anddev.andengine.engine.camera.hud.controls.BaseOnScreenControl.IOnScreenControlListener;
 import org.anddev.andengine.engine.handler.IUpdateHandler;
+import org.anddev.andengine.engine.handler.timer.ITimerCallback;
+import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.scene.Scene;
+import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.util.Debug;
+
+import com.badlogic.gdx.physics.box2d.Body;
 
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,6 +36,7 @@ public class MP_Server_BotWars extends BotWars {
 		
 		try {
 			mServerSocket = new ServerSocket(50000);
+
 
 		} catch (IOException e) {
 
@@ -54,11 +60,18 @@ public class MP_Server_BotWars extends BotWars {
 	}
 
 	@Override
-	public void spawnBullet() {
+	public void jumpPlayer(Body _playerBody) {
+		mPrintWriterOUT.println("jump,0,0");
+		mPrintWriterOUT.flush();
+		super.jumpPlayer(_playerBody);
+	}
+
+	@Override
+	public void spawnBullet(AnimatedSprite _playerSprite, int _playerDir) {
 		  
          
-		super.spawnBullet();
-		mPrintWriterOUT.println("jump,0,0");
+		super.spawnBullet(_playerSprite,_playerDir);
+		mPrintWriterOUT.println("bullet,"+playerDir+",0");
 		mPrintWriterOUT.flush();
 		//sendMessage("jump,0,0");
 	}
@@ -83,16 +96,26 @@ public void sendMessage(String pMessage)
 
 			try {
 				mSocket=mServerSocket.accept();
+				mSocket.setTcpNoDelay(true);
+				
 				mOutputStream=mSocket.getOutputStream();
 				mPrintWriterOUT=new PrintWriter(mOutputStream);
 			} catch (IOException e) {
 				Debug.d("Error accepting ServerSocket");
 			}
+			//createLocationErrorCorrectionHandler();
 /*
 			(new Thread() {
 
 				public void run() {
-
+					while(true){try {
+						sleep(500);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					mPrintWriterOUT.println("location,"+mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().x+","+mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().y);
+					mPrintWriterOUT.flush();}		
 				}
 
 			}
@@ -108,13 +131,55 @@ public void sendMessage(String pMessage)
 	
 
 	@Override
-	public void movePlayerRight() {
+	public void movePlayerRight(AnimatedSprite _playerSprite,Body _playerBody) {
+		//if(playerName.contains("player_self")){
 		mPrintWriterOUT.println("right,0,0");
 		mPrintWriterOUT.flush();
-		super.movePlayerRight();
+		//}
+		super.movePlayerRight(_playerSprite,_playerBody);
 		isStopped=false;
 	}
 
+	@Override
+	public void movePlayerLeft(AnimatedSprite _playerSprite,Body _playerBody) {
+		//if(playerName.contains("player_self")){
+		mPrintWriterOUT.println("left,0,0");
+		mPrintWriterOUT.flush();
+		//}
+		super.movePlayerLeft(_playerSprite,_playerBody);
+		isStopped=false;
+	}
+
+	@Override
+	public void stopPlayer(AnimatedSprite _playerSprite, Body _playerBody) {
+		if(mPrintWriterOUT!=null){if(!isStopped){mPrintWriterOUT.println("stop,0,0");
+		mPrintWriterOUT.flush();isStopped=true;
+		mPrintWriterOUT.println("location,"+mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().x+","+mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().y);
+		mPrintWriterOUT.flush();
+		}}
+		super.stopPlayer(_playerSprite, _playerBody);
+	}
+
+	
+	
+
+	private void createLocationErrorCorrectionHandler() {
+		final TimerHandler locationErrorCorrectionHandler;
+
+		this.getEngine().registerUpdateHandler(locationErrorCorrectionHandler = new TimerHandler(1, true, new ITimerCallback() {
+			
+			@Override
+			public void onTimePassed(TimerHandler pTimerHandler) {
+				
+				mPrintWriterOUT.println("location,"+mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().x+","+mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().y);
+				mPrintWriterOUT.flush();		
+			}
+		}));}
+	
+	
+	
+	
+	/*
 	@Override
 	public void movePlayerLeft() {
 		mPrintWriterOUT.println("left,0,0");
@@ -122,17 +187,18 @@ public void sendMessage(String pMessage)
 		super.movePlayerLeft();
 		isStopped=false;
 	}
-
+	
+	*//*
 	@Override
-	public void doNotMovePlayer() {
+	public void stopPlayer() {
 		
 		if(mPrintWriterOUT!=null){if(!isStopped){mPrintWriterOUT.println("stop,0,0");
 		mPrintWriterOUT.flush();isStopped=true;}
-		super.doNotMovePlayer();
+		super.stopPlayer();
 		}
 		
 	}
-
+*/
 	
 	
 	//
