@@ -154,7 +154,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private static int mapOffset = 100;
 	private boolean deleteEnemy = false;
 	private boolean deleteBullet = false;
-	public int playerDir;
+	public int playerDir=1;
 	private boolean desBull = false;
 	private boolean desEnemy = false;
 	private boolean bulletPresent = false;
@@ -696,8 +696,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	public boolean onCreateOptionsMenu(Menu menu) {
 
 		super.onCreateOptionsMenu(menu);
-		menu.add(0, 0, 0, R.string.menu_resume);
-		menu.add(0, 1, 0, R.string.menu_pause);
+		
 		menu.add(0, 2, 0, R.string.menu_return);
 		menu.add(0, 3, 0, R.string.menu_exit);
 
@@ -717,18 +716,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				Toast.makeText(this, "Exit", 100).show();
 				System.exit(0);
 
-			}
-
-			else if (item.getItemId() == 0) {// resume
-				mEngine.start();
-
-				Toast.makeText(this, "Resume", 100).show();
-
-			} else if (item.getItemId() == 1) {// pause
-				mEngine.stop();
-				Toast.makeText(this, "Pause", 100).show();
-
-			}
+			}			
 
 			else if (item.getItemId() == 2) {// return to main menu
 				// onDestroy();
@@ -1105,8 +1093,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		if (enableSounds)
 			mSound.play();
-		playerDir = PLAYER_DIRECTION_RIGHT;
-		isPlayerMoving = true;
+		if(_playerSprite.getUserData().toString().contains("player_self"))
+			{playerDir = PLAYER_DIRECTION_RIGHT;
+		isPlayerMoving = true;}
 		//}
 		
 		
@@ -1125,8 +1114,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		if (enableSounds)
 			mSound.play();
-		playerDir = PLAYER_DIRECTION_LEFT;
-		isPlayerMoving = true;
+		if(_playerSprite.getUserData().toString().contains("player_self"))
+		{playerDir = PLAYER_DIRECTION_LEFT;
+		isPlayerMoving = true;}
 		//}
 	}	
 	

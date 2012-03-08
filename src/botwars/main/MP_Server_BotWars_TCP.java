@@ -23,7 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-public class MP_Server_BotWars extends BotWars {
+public class MP_Server_BotWars_TCP extends BotWars {
 
 	private Socket mSocket;
 	private ServerSocket mServerSocket;

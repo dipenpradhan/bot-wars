@@ -73,7 +73,7 @@ public class StartMenu extends Activity implements OnClickListener {
 		case R.id.txv_quick:
 			// Toast.makeText(getBaseContext(), "Feature under construction",
 			// Toast.LENGTH_LONG).show();
-			Intent openMP_MapsMenu = new Intent(this, MP_MapMenu.class);
+			Intent openMP_MapsMenu = new Intent(this, MP_MapMenu_UDP.class);
 			startActivity(openMP_MapsMenu);
 			finish();
 		

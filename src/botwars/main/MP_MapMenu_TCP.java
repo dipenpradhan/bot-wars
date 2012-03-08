@@ -11,7 +11,7 @@ import android.widget.GridView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
-public class MP_MapMenu extends MapMenu{
+public class MP_MapMenu_TCP extends MapMenu{
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -28,7 +28,7 @@ public class MP_MapMenu extends MapMenu{
 	       {
 	        BotWars.setMap(position);
 	        makeModeDialog();
-	        /*Intent StartIntent = new Intent(MP_MapMenu.this, BotWars.class);
+	        /*Intent StartIntent = new Intent(MP_MapMenu_TCP.this, BotWars.class);
 			startActivity(StartIntent);
 			finish();
 	        */
@@ -46,10 +46,11 @@ public class MP_MapMenu extends MapMenu{
 		AlertDialog.Builder modeDialog = new AlertDialog.Builder(this);
 
 		modeDialog.setMessage("Select Mode");
-
+		
 		modeDialog.setPositiveButton("Server", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
-				Intent openMP_Server_BotWars = new Intent(MP_MapMenu.this,MP_Server_BotWars.class);
+				
+				Intent openMP_Server_BotWars = new Intent(MP_MapMenu_TCP.this,MP_Server_BotWars_TCP.class);
 				startActivity(openMP_Server_BotWars);
 				finish();
 			}
@@ -57,7 +58,7 @@ public class MP_MapMenu extends MapMenu{
 
 		modeDialog.setNegativeButton("Client", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
-				Intent openMP_Client_BotWars = new Intent(MP_MapMenu.this,MP_Client_BotWars.class);
+				Intent openMP_Client_BotWars = new Intent(MP_MapMenu_TCP.this,MP_Client_BotWars_TCP.class);
 				startActivity(openMP_Client_BotWars);
 				finish();
 			}
