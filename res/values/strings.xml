@@ -12,7 +12,7 @@
     <string name="sm_impul">Impulse</string>
     <string name="sm_map">Map</string>
     
-    
+    <!--   StartMenu -->
     <string name="str_startmenu_title">BoT WaRs</string>
     <string name="str_startmenu_start">SINGLE PLAYER</string>
     <string name="str_startmenu_settings">SETTINGS</string>
@@ -20,6 +20,17 @@
     <string name="str_startmenu_about">ABOUT</string>
     <string name="str_startmenu_exit">EXIT</string>
 
+    
+    
+    <!--  DeviceListActivity -->
+    <string name="scanning">scanning for devices...</string>
+    <string name="select_device">select a device to connect</string>
+    <string name="none_paired">No devices have been paired</string>
+    <string name="none_found">No devices found</string>
+    <string name="title_paired_devices">Paired Devices</string>
+    <string name="title_other_devices">Other Available Devices</string>
+    <string name="button_scan">Scan for devices</string>
+    
     <string-array name="maps_array">
         <item>Map 1</item>
         <item>Map 2</item>
@@ -35,6 +46,9 @@
     <string name="sm_mapprompt">Choose A Map</string>
     <string name="sm_scene">Scene</string>
     <string name="sm_sceneprompt">Choose A Scene</string>
+    
+    <!--  SettingsMenu -->
+    
     <string name="str_settingsmenu_music">Music</string>
     <string name="str_settingsmenu_sound">Sound</string>
     <string name="str_settingsmenu_volume">Volume</string>
