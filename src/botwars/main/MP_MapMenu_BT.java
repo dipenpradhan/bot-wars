@@ -3,8 +3,11 @@ package botwars.main;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.anddev.andengine.util.Debug;
+
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
@@ -29,11 +32,16 @@ private static final UUID MY_UUID_SECURE =
     UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
 private static final UUID MY_UUID_INSECURE =
     UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
-
+private static final UUID MY_UUID =
+UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
 
 //Name for the SDP record when creating server socket
 private static final String NAME_SECURE = "BluetoothChatSecure";
 private static final String NAME_INSECURE = "BluetoothChatInsecure";
+
+private AcceptThread mAcceptThread;
+private ConnectThread mConnectThread;
+
 
 
 	@Override
@@ -74,17 +82,18 @@ private static final String NAME_INSECURE = "BluetoothChatInsecure";
 	}
 
 	private void makeModeDialog() {
-
+		 Intent serverIntent = new Intent(MP_MapMenu_BT.this, DeviceListActivity.class);
+         startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
+         
 		AlertDialog.Builder modeDialog = new AlertDialog.Builder(this);
 
 		modeDialog.setMessage("Select Mode");
 		
 		modeDialog.setPositiveButton("Server", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
-				
-				Intent openMP_Server_BotWars = new Intent(MP_MapMenu_BT.this,MP_Server_BotWars_BT.class);
-				startActivity(openMP_Server_BotWars);
-				finish();
+				mAcceptThread=new AcceptThread();
+				mAcceptThread.start();
+
 			}
 		});
 
@@ -92,9 +101,9 @@ private static final String NAME_INSECURE = "BluetoothChatInsecure";
 			public void onClick(DialogInterface arg0, int arg1) {
 				
 				
-				 Intent serverIntent = new Intent(MP_MapMenu_BT.this, DeviceListActivity.class);
-		            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
-				
+				Debug.d("-----------------bt add= ");
+				//mConnectThread=new ConnectThread(mBluetoothAdapter.getRemoteDevice(DeviceListActivity.EXTRA_DEVICE_ADDRESS));
+				//mConnectThread.start();
 				/*				 
 				if (!mBluetoothAdapter.isEnabled()) {
 				    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -178,7 +187,51 @@ private class AcceptThread extends Thread {
 }
 	
 	
-	
+private class ConnectThread extends Thread {
+    private final BluetoothSocket mmSocket;
+    private final BluetoothDevice mmDevice;
+ 
+    public ConnectThread(BluetoothDevice device) {
+        // Use a temporary object that is later assigned to mmSocket,
+        // because mmSocket is final
+        BluetoothSocket tmp = null;
+        mmDevice = device;
+ 
+        // Get a BluetoothSocket to connect with the given BluetoothDevice
+        try {
+            // MY_UUID is the app's UUID string, also used by the server code
+            tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+        } catch (IOException e) { }
+        mmSocket = tmp;
+    }
+ 
+    public void run() {
+        // Cancel discovery because it will slow down the connection
+        mBluetoothAdapter.cancelDiscovery();
+ 
+        try {
+            // Connect the device through the socket. This will block
+            // until it succeeds or throws an exception
+            mmSocket.connect();
+        } catch (IOException connectException) {
+            // Unable to connect; close the socket and get out
+            try {
+                mmSocket.close();
+            } catch (IOException closeException) { }
+            return;
+        }
+ 
+        // Do work to manage the connection (in a separate thread)
+       // manageConnectedSocket(mmSocket);
+    }
+ 
+    /** Will cancel an in-progress connection, and close the socket */
+    public void cancel() {
+        try {
+            mmSocket.close();
+        } catch (IOException e) { }
+    }
+}
 	
 	
 /*	ArrayAdapter<CharSequence> mArrayAdapter;

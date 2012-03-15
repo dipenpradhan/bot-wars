@@ -32,8 +32,7 @@ private BluetoothAdapter mBluetoothAdapter;
 private static int REQUEST_ENABLE_BT=1;
 AnimatedSprite player_mp_sprite;
 Body player_mp_body;
-//http://www.andengine.org/forums/development/body-settransform-t1150.html
-	@Override
+@Override
 	public Scene onLoadScene() {
 		
 		
