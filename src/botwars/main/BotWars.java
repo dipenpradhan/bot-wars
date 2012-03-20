@@ -2,7 +2,6 @@ package botwars.main;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -29,6 +28,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXObject;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXObjectGroup;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
+import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
@@ -36,18 +36,22 @@ import org.anddev.andengine.entity.scene.background.RepeatingSpriteBackground;
 import org.anddev.andengine.entity.shape.IShape;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
+import org.anddev.andengine.entity.text.ChangeableText;
 import org.anddev.andengine.entity.util.FPSLogger;
-
 import org.anddev.andengine.extension.input.touch.controller.MultiTouch;
 import org.anddev.andengine.extension.input.touch.controller.MultiTouchController;
+import org.anddev.andengine.extension.input.touch.detector.PinchZoomDetector;
+import org.anddev.andengine.extension.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
 import org.anddev.andengine.extension.input.touch.exception.MultiTouchException;
 import org.anddev.andengine.extension.physics.box2d.PhysicsConnector;
 import org.anddev.andengine.extension.physics.box2d.PhysicsFactory;
 import org.anddev.andengine.extension.physics.box2d.PhysicsWorld;
 import org.anddev.andengine.input.touch.TouchEvent;
 import org.anddev.andengine.input.touch.detector.ScrollDetector;
-import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
+import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
+import org.anddev.andengine.opengl.font.Font;
+import org.anddev.andengine.opengl.font.FontFactory;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -58,6 +62,8 @@ import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.hardware.SensorManager;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -73,10 +79,6 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
-import com.badlogic.gdx.physics.box2d.WorldManifold;
-
-import org.anddev.andengine.extension.input.touch.detector.PinchZoomDetector;
-import org.anddev.andengine.extension.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
 
 /**
  * (c) 2010 Nicolas Gramlich (c) 2011 Zynga
@@ -106,7 +108,8 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private static final short MASKBITS_WALL = CATEGORYBIT_WALL + CATEGORYBIT_PLAYER + CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET;
 	private static final short MASKBITS_PLAYER = CATEGORYBIT_WALL + CATEGORYBIT_PLAYER + CATEGORYBIT_ENEMY;
 	private static final short MASKBITS_ENEMY = CATEGORYBIT_WALL + CATEGORYBIT_BULLET + CATEGORYBIT_ENEMY + CATEGORYBIT_PLAYER;
-	private static final short MASKBITS_BULLET = CATEGORYBIT_WALL + CATEGORYBIT_ENEMY + CATEGORYBIT_BULLET;
+	private static final short MASKBITS_BULLET = CATEGORYBIT_WALL + CATEGORYBIT_ENEMY;// +
+																						// CATEGORYBIT_BULLET;
 	// ===========================================================
 	// Fields
 	// ===========================================================
@@ -138,7 +141,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	private TMXTiledMap mTMXTiledMap;
 	private Music mMusic;
-	private Sound mSound;
+	private Sound mWalkSound,mShootSound;
 	private boolean isLanded = false;
 	boolean enemyLanded = false;
 	private Body mPlayerBody;
@@ -163,6 +166,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private boolean desEnemy = false;
 	private boolean bulletPresent = false;
 	private boolean reduceHealth = false;
+	private boolean enemyShot = false;
+	private boolean isButtonAreaTouched=false;
+	
 	private float refrainImpulse = 5.0f;
 
 	public float Player_Max_Health = 100.0f;
@@ -175,6 +181,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private static boolean enableMusic;
 	private static boolean enableSounds;
 	private static float mVolume = 1.0f;
+	private int mScore = 0;
 
 	private int jumpDir = 0;
 
@@ -191,7 +198,11 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	private static Body player_self_body;
 
-	private static int total_enemies;
+	private ChangeableText mScoreChangeableText;
+	private Font mScoreFont;
+	private BitmapTextureAtlas mScoreTextureAtlas;
+
+	private int[][] wallYLine;
 
 	// private Body collBody1,collBody2;
 	// ===========================================================
@@ -259,10 +270,12 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		MusicFactory.setAssetBasePath("mfx/");
 		SoundFactory.setAssetBasePath("mfx/");
+		FontFactory.setAssetBasePath("font/");
 
 		loadCharacters();
 		loadControls();
 		loadSounds();
+		loadScore();
 		loadMap();
 
 	}
@@ -317,9 +330,12 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		player_self_body = mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(player_self_sprite);
 
 		enemyLandedArr = new boolean[enemyCount];
-		/*
-		 * for(int i=0;i<enemyCount;i++) { enemyLandedArr[i]=false; }
-		 */
+
+		//Line l = new Line(0, 0, 100, 0);
+		//l.setUserData("line");
+
+		//mScene.attachChild(l);
+		//mEntityList.add(l);
 		return mScene;
 	}
 
@@ -354,17 +370,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				if ((fix1_name.contains("player_self") && fix2_name.contains("enemy")) || (fix2_name.contains("player_self") && fix1_name.contains("enemy")))
 					isLanded = true;
 
-				/*
-				 * if ((fix1_name.equals(enemyName) &&
-				 * fix2_name.contains("wall")) || (fix2_name.equals(enemyName)
-				 * && fix1_name.contains("wall")))
-				 * {//Debug.d("See:////////   "+contact
-				 * .getWorldManifold().getNumberOfContactPoints()); //Debug.d(
-				 * "See:///////////////////////////////////////////////////////  BEGIN CONTACT  "
-				 * +test); //enemyLanded=true; //test++;
-				 * Debug.d("see:////////   "+enemyName); enemyLanded=true; }
-				 */
-				if ((fix1_name.contains("enemy") && fix2_name.equalsIgnoreCase("wall")) || (fix2_name.contains("enemy") && fix1_name.equalsIgnoreCase("wall"))) {
+				if ((fix1_name.contains("enemy") && fix2_name.contains("wall")) || (fix2_name.contains("enemy") && fix1_name.contains("wall"))) {
 					enemyLanded = true;
 
 				}
@@ -390,7 +396,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 					if ((fix1_name.contains("bullet") && fix2_name.contains("enemy"))
 
 					|| (fix2_name.contains("bullet") && fix1_name.contains("enemy"))) {
-
+						enemyShot = true;
 						desEnemy = true;
 						desBull = true;
 
@@ -421,21 +427,24 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				if (enemyLanded) {
 
 					for (int i = 0; i < enemyCount; i++) {
-						if (fix2_name.equals("enemy" + i))
-							{enemyLandedArr[i] = true;
-						Debug.d("enemylanded at "+i+" true");}
+						if (fix2_name.equals("enemy" + i)) {
+							enemyLandedArr[i] = true;
+							Debug.d("enemylanded at " + i + " true");
+						}
 					}
 
 					enemyLanded = false;
 				}
+
 			}
 
 		};
 
 	}
 
-	int test = 0, test2 = 0;
+	int test = 1, test2 = 0;
 	boolean[] enemyLandedArr;
+	boolean testboo;
 
 	public void createGameUpdateHandler() {
 
@@ -455,27 +464,77 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 						}
 					}
 				}
-
+				if (enemyShot) {
+					mScore += 10;
+					mScoreChangeableText.setText("Score: " + mScore);
+					enemyShot = false;
+				}
 				// jump enemy if enemy is landed and within 5.0m
 				for (int i = 0; i < enemyCount; i++) {
-					Body temp_body = mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("enemy" + i));
+					IShape temp_enemy_shape = findShape("enemy" + i);
+					Body temp_enemy_body = mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(temp_enemy_shape);
 
-					if (temp_body != null) {
-						
-						
-						if (getDistance(player_self_body, temp_body) < 5.0f && enemyLandedArr[i]) {
+					if (temp_enemy_body != null) {
 
-							temp_body.applyLinearImpulse(0, -mImpulseY, temp_body.getPosition().x, temp_body.getPosition().y);
-							//temp_body.setLinearVelocity(mLinearVelocityX, temp_body.getLinearVelocity().y);
+						if (getDistance(player_self_body, temp_enemy_body) < 10.0f && enemyLandedArr[i]) {
+							
+							
+							
+							temp_enemy_body.applyLinearImpulse(0, -5.0f, temp_enemy_body.getPosition().x, temp_enemy_body.getPosition().y);
+							if (playerDir == PLAYER_DIRECTION_RIGHT)
+								temp_enemy_body.setLinearVelocity(-mLinearVelocityX, temp_enemy_body.getLinearVelocity().y);
+
+							if (playerDir == PLAYER_DIRECTION_LEFT)
+								temp_enemy_body.setLinearVelocity(mLinearVelocityX, temp_enemy_body.getLinearVelocity().y);
+
 							enemyLandedArr[i] = false;
-							Debug.d("enemylanded at "+i+" true");
+							// testboo=false;
+							Debug.d("enemylanded at " + i + " true");
+
+							/*
+							 * for(int j=0;j<wallCount;j++) { for(int
+							 * k=wallYLine[0][i];k<wallYLine[1][i];k++) {
+							 * for(int l=(int)player_self_sprite.getX();l<(int)
+							 * temp_enemy_shape.getX();l++) {
+							 * 
+							 * 
+							 * if(k==l){ testboo=true; }
+							 * 
+							 * } for(int l=(int)temp_enemy_shape.getX();l<(int)
+							 * player_self_sprite.getX();l++) {
+							 * 
+							 * 
+							 * if(k==l){ testboo=true; }
+							 * 
+							 * } } }
+							 */
+							/*
+							 * findShape("line").setPosition(temp_enemy_shape.getX
+							 * (), temp_enemy_shape.getY());
+							 * 
+							 * Debug.d("wall count"+wallCount);
+							 * 
+							 * 
+							 * for(int j=0;j<wallCount;j++) {
+							 * Debug.d("checking  "
+							 * +findShape("wallLine"+j).getUserData
+							 * ().toString());
+							 * if(findShape("wallLine"+j).collidesWith
+							 * (findShape("line"))){
+							 * 
+							 * testboo=true;
+							 * Debug.d("WALL "+j+" DETECTED by"+temp_enemy_shape
+							 * .getUserData().toString()); }
+							 * 
+							 * }
+							 */
+
 						}
-						
-						else if(enemyLandedArr[i]){
-							temp_body.setLinearVelocity(0, 0);
+
+						else if (enemyLandedArr[i]) {
+							temp_enemy_body.setLinearVelocity(0, 0);
 						}
-						
-						
+
 					}
 
 				}
@@ -504,6 +563,12 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				// reduce health by value of Player_Health_Reduce,
 				// reduce health bar by 1/5 portions every 20 health points
 				// and make player bounce off enemy
+
+				if (machineGun && test % 4 == 0) {
+					test = 1;
+					spawnBullet(player_self_sprite, playerDir);
+				} else if (machineGun && test % 4 != 0)
+					test++;
 
 				if (reduceHealth && mHealthSprite != null && mPlayerSprite != null) {
 
@@ -562,6 +627,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	}
 
 	String enemyName = "";
+	private boolean machineGun = false;
 
 	@Override
 	public void onLoadComplete() {
@@ -577,29 +643,47 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		for (final TMXObjectGroup group : map.getTMXObjectGroups()) {
 
-			// if(group.getTMXObjectGroupProperties().containsTMXProperty("Zeme",
-			// "true")){
-			// This is our "wall" layer. Create the boxes from it
-
-			for (final TMXObject object : group.getTMXObjects()) {
-
-				rect = new Rectangle(object.getX(), object.getY(), object.getWidth(), object.getHeight());
-
-				boxFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 1f, false, CATEGORYBIT_WALL, MASKBITS_WALL, (short) 0);
-
-				PhysicsFactory.createBoxBody(this.mPhysicsWorld, rect, BodyType.StaticBody, boxFixtureDef).setUserData("wall");
-
-				rect.setVisible(false);
-				mScene.attachChild(rect);
+			if (group.getName().equals("wall")) {
+				makeRectanglesFromObjects(group, "wall");
 			}
-
 		}
 
+	}
+
+	int wallCount = 0;
+
+	private void makeRectanglesFromObjects(TMXObjectGroup _group, String _userData) {
+
+		for (final TMXObject object : _group.getTMXObjects()) {
+
+			/*
+			 * Line mLine=new
+			 * Line(object.getX(),object.getY(),object.getX(),object
+			 * .getY()+object.getHeight());
+			 * mLine.setUserData("wallLine"+wallCount);
+			 * 
+			 * mScene.attachChild(mLine); wallCount++;
+			 */
+			rect = new Rectangle(object.getX(), object.getY(), object.getWidth(), object.getHeight());
+			boxFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 1f, false, CATEGORYBIT_WALL, MASKBITS_WALL, (short) 0);
+
+			PhysicsFactory.createBoxBody(this.mPhysicsWorld, rect, BodyType.StaticBody, boxFixtureDef).setUserData(_userData);
+			// rect.setUserData(_userData+wallCount);
+
+			rect.setVisible(false);
+			mScene.attachChild(rect);
+		}
 	}
 
 	public void initControls() {
 
 		HUD mHUD = new HUD();
+
+		/* The ScoreText showing how many points the player scored. */
+		mScoreChangeableText = new ChangeableText(5, 5, mScoreFont, "Score: 0", "Score: XXXX".length());
+		mScoreChangeableText.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		mScoreChangeableText.setAlpha(0.5f);
+		mHUD.attachChild(mScoreChangeableText);
 
 		Sprite jump = new Sprite(CAMERA_WIDTH - 120, CAMERA_HEIGHT - 175, mJumpTextureRegion) {
 
@@ -612,11 +696,11 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 					jumpPlayer(player_self_body);
 					mCamera.setZoomFactor(0.80f);
 					isLanded = false;
-
+					isButtonAreaTouched=true;
 				}
 				if (pEvent.isActionUp())
 					mCamera.setZoomFactor(1.0f);
-
+					isButtonAreaTouched=false;
 				return false;
 
 			}
@@ -628,16 +712,21 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 			public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY) {
 
 				if (pEvent.isActionDown()) {
-					if (bulletPresent) {
-						// destroyBullet();
-
-					}
-					spawnBullet(player_self_sprite, playerDir);
+					/*
+					 * if (bulletPresent) { destroyBullet();
+					 * 
+					 * }
+					 */
+					// spawnBullet(player_self_sprite, playerDir);
+					machineGun = true;
 					mCamera.setZoomFactor(0.80f);
-
+					isButtonAreaTouched=true;
 				}
-				if (pEvent.isActionUp())
+				if (pEvent.isActionUp()) {
 					mCamera.setZoomFactor(1.0f);
+					machineGun = false;
+					isButtonAreaTouched=false;
+				}
 				return false;
 
 			}
@@ -655,25 +744,28 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		mHUD.attachChild(mHealthSprite);
 		mCamera.setHUD(mHUD);
 
-		this.mDigitalOnScreenControl = new DigitalOnScreenControl(0, CAMERA_HEIGHT - this.mOnScreenControlBaseTextureRegion.getHeight(), this.mCamera,
+		this.mDigitalOnScreenControl = new DigitalOnScreenControl(10, CAMERA_HEIGHT - this.mOnScreenControlBaseTextureRegion.getHeight()-5, this.mCamera,
 				this.mOnScreenControlBaseTextureRegion, this.mOnScreenControlKnobTextureRegion, 0.1f,
 
 				new IOnScreenControlListener() {
 					@Override
 					public void onControlChange(final BaseOnScreenControl pBaseOnScreenControl, final float pValueX, final float pValueY) {
-
+						
+						
 						if (pValueX > 0 && !player_self_sprite.isAnimationRunning()) {
 							movePlayerRight(player_self_sprite, player_self_body);
-
+							isButtonAreaTouched=true;
 						}
 
 						else if (pValueX < 0 && !player_self_sprite.isAnimationRunning()) {
 							movePlayerLeft(player_self_sprite, player_self_body);
-
-						} else if (pValueX == 0) {
+							isButtonAreaTouched=true;
+						} 
+						else if (pValueX == 0) {
 							if (isPlayerMoving) {
 								stopPlayer(player_self_sprite, player_self_body);
 								isPlayerMoving = false;
+								isButtonAreaTouched=false;
 							}
 
 						}
@@ -683,17 +775,17 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				});
 
 		this.mDigitalOnScreenControl.getControlBase().setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-		this.mDigitalOnScreenControl.getControlBase().setAlpha(0.5f);
+		this.mDigitalOnScreenControl.getControlBase().setAlpha(0.9f);
 		this.mDigitalOnScreenControl.getControlBase().setScaleCenter(0, 128);
-		this.mDigitalOnScreenControl.getControlBase().setScale(1.25f);
-		this.mDigitalOnScreenControl.getControlKnob().setScale(1.25f);
-		this.mDigitalOnScreenControl.getControlKnob().setAlpha(0.7f);
+		this.mDigitalOnScreenControl.getControlBase().setScale(1.50f);
+		this.mDigitalOnScreenControl.getControlKnob().setScale(1.50f);
+		this.mDigitalOnScreenControl.getControlKnob().setAlpha(0.4f);
 		this.mDigitalOnScreenControl.refreshControlKnobPosition();
 		this.mDigitalOnScreenControl.setAllowDiagonal(false);
 
 	}
 
-	public void loadMap() {
+	private void loadMap() {
 		this.mRepeatingSpriteBackground = new RepeatingSpriteBackground(CAMERA_WIDTH, CAMERA_HEIGHT, this.mEngine.getTextureManager(), new AssetBitmapTextureAtlasSource(this,
 				mapBG), 1.0f);
 		try {
@@ -705,6 +797,16 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 			Debug.e(tmxle);
 		}
 
+	}
+
+	private void loadScore() {
+		/* Load the font we are going to use. */
+
+		this.mScoreTextureAtlas = new BitmapTextureAtlas(512, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		this.mScoreFont = FontFactory.createFromAsset(this.mScoreTextureAtlas, this, "UnrealTournament.ttf", 32, true, Color.WHITE);
+
+		this.mEngine.getTextureManager().loadTexture(this.mScoreTextureAtlas);
+		this.mEngine.getFontManager().loadFont(this.mScoreFont);
 	}
 
 	private void loadCharacters() {
@@ -744,8 +846,10 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 			mMusic.setLooping(true);
 
-			mSound = SoundFactory.createSoundFromAsset(this.mEngine.getSoundManager(), this, "fire_alarm4.wav");
+			mWalkSound = SoundFactory.createSoundFromAsset(this.mEngine.getSoundManager(), this, "fire_alarm4.wav");
 
+			mShootSound = SoundFactory.createSoundFromAsset(this.mEngine.getSoundManager(), this, "explosion.ogg");
+					
 		} catch (final IOException e) {
 			Debug.e(e);
 		}
@@ -907,6 +1011,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		bulletPresent = true;
 		mEntityList.add(mBulletSprite);
+		mShootSound.play();
 	}
 
 	private int playerCount = 0;
@@ -929,7 +1034,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	public void spawnEnemy(int xLoc) {
 
-		mEnemySprite = new AnimatedSprite(mapOffset + 150 * xLoc, 0+enemyCount*10, mEnemyTextureRegion);
+		mEnemySprite = new AnimatedSprite(mapOffset + 150 * xLoc, 0 + enemyCount * 10, mEnemyTextureRegion);
 		mEnemySprite.setScale(0.7f);
 		FixtureDef mEnemyFixtureDef = PhysicsFactory.createFixtureDef(0, 0f, 0f, false, CATEGORYBIT_ENEMY, MASKBITS_ENEMY, (short) 0);
 
@@ -1056,8 +1161,11 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	@Override
 	public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+		if(!isButtonAreaTouched)
+		{
 		this.mCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
-		Debug.d("zoomia");
+		Debug.d("zoom factor"+pZoomFactor);
+		}
 	}
 
 	@Override
@@ -1076,7 +1184,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 			} else {
 				if (pSceneTouchEvent.isActionDown()) {
 					this.mScrollDetector.setEnabled(true);
-
+					
 				}
 
 				if (pSceneTouchEvent.isActionUp()) {
@@ -1095,7 +1203,8 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	@Override
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent, final float pDistanceX, final float pDistanceY) {
 		final float zoomFactor = this.mCamera.getZoomFactor();
-		this.mCamera.offsetCenter(-pDistanceX / zoomFactor * 10, -pDistanceY / zoomFactor * 10);
+		if(!isButtonAreaTouched)
+	{this.mCamera.offsetCenter(-pDistanceX / zoomFactor * 10, -pDistanceY / zoomFactor * 10);}
 	}
 
 	public void jumpPlayer(Body _playerBody) {
@@ -1130,7 +1239,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	 * mPlayerSprite.animate(new long[] { 50, 50, 50, 50, 50, 50, 50 }, 0, 6,
 	 * false);
 	 * 
-	 * if (enableSounds) mSound.play(); playerDir = PLAYER_DIRECTION_RIGHT;
+	 * if (enableSounds) mWalkSound.play(); playerDir = PLAYER_DIRECTION_RIGHT;
 	 * isPlayerMoving = true; }
 	 */
 
@@ -1152,7 +1261,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		_playerSprite.animate(new long[] { 50, 50, 50, 50, 50, 50, 50 }, 0, 6, false);
 
 		if (enableSounds)
-			mSound.play();
+			mWalkSound.play();
 		if (_playerSprite.getUserData().toString().contains("player_self")) {
 			playerDir = PLAYER_DIRECTION_RIGHT;
 			isPlayerMoving = true;
@@ -1174,7 +1283,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		_playerSprite.animate(new long[] { 50, 50, 50, 50, 50, 50, 50 }, 0, 6, false);
 
 		if (enableSounds)
-			mSound.play();
+			mWalkSound.play();
 		if (_playerSprite.getUserData().toString().contains("player_self")) {
 			playerDir = PLAYER_DIRECTION_LEFT;
 			isPlayerMoving = true;
@@ -1189,7 +1298,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	 * mPlayerBody.getLinearVelocity().y); mPlayerSprite.animate(new long[] {
 	 * 50, 50, 50, 50, 50, 50, 50 }, 0, 6, false);
 	 * 
-	 * if (enableSounds) mSound.play(); playerDir = PLAYER_DIRECTION_LEFT;
+	 * if (enableSounds) mWalkSound.play(); playerDir = PLAYER_DIRECTION_LEFT;
 	 * isPlayerMoving = true; }
 	 */
 

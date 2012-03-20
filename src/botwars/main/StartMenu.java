@@ -73,10 +73,8 @@ public class StartMenu extends Activity implements OnClickListener {
 		case R.id.txv_quick:
 			// Toast.makeText(getBaseContext(), "Feature under construction",
 			// Toast.LENGTH_LONG).show();
-			Intent openMP_MapsMenu = new Intent(this, MP_MapMenu_BT.class);
-			startActivity(openMP_MapsMenu);
-			finish();
 		
+			makeMultiplayerModeDialog();
 			
 			//finish();
 			break;
@@ -116,6 +114,35 @@ public class StartMenu extends Activity implements OnClickListener {
 		aboutDialog.show();
 	}
 
+	
+	private void makeMultiplayerModeDialog() {
+
+		AlertDialog.Builder multiplayerModeDialog= new AlertDialog.Builder(this);
+
+		multiplayerModeDialog.setMessage("Select Multiplayer Mode");
+
+		multiplayerModeDialog.setPositiveButton("WiFi", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface arg0, int arg1) {
+				Intent openMP_MapMenu_UDP = new Intent(StartMenu.this, MP_MapMenu_UDP.class);
+				startActivity(openMP_MapMenu_UDP);
+				finish();
+				
+			}
+		});
+
+		multiplayerModeDialog.setNegativeButton("Bluetooth", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface arg0, int arg1) {
+				Intent openMP_MapMenu_BT = new Intent(StartMenu.this, MP_MapMenu_BT.class);
+				startActivity(openMP_MapMenu_BT);
+				finish();
+				
+			
+			}
+		});
+
+		multiplayerModeDialog.show();
+	}
+	
 	public static void settingsChanged() {
 		settingsChanged = true;
 	}

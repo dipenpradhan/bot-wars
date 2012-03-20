@@ -11,10 +11,10 @@
  </tileset>
  <layer name="map" width="60" height="16">
   <data encoding="base64" compression="gzip">
-   H4sIAAAAAAAAC+3UzWrCQBAH8OmL6E1vCkItglL8aC9CRT2pJ00NJILSWixW6NnX6pt1Bie4buK62TUGIX/4sUtC1pnNGoAsWbLEyUKQJZwk9+be9v3vIe0KrhPVvs8k5+KxWyTJc0I95lAe1P3qrkWueU501orzDaP6CqgI9v3WUEVYR/cdqep9l9iGaiuhMoT79eDyOaZnqE96D00cW3Das23mEttQXVX0BGY10jN9NORxIND9NqhCPTbQIxz79dne4H9DdTwz035HaMLjmK87PA9MIXw2ZQ6v1xVQj3U49EzzNnMNvPHYYzR/ZfI5uoRq9SwtJD7vQwe98O8E91YKS4F8zxXegauxRtT1YP5h6TPCGn2xtWBj6Dsm1RpbSz8Rdgq/KfsH95M71QAPAAA=
+   H4sIAAAAAAAAA+3UzWrCQBAH8OmL6E1vCkItglL8aC9CRT2pJ00NJILSWixW6NnX6pt1Bie4buK62TUGIX/4sUtC1pnNGoAsWbLEyUKQJZwk9+be9v3vIe0KrhPVvs8k5+KxWyTJc0I95lAe1P3qrkWueU501orzDaP6CqgI9v3WUEVYR/cdqep9l9iGaiuhMoT79eDyOaZnqE96D00cW3Das23mEttQXVX0BGY10jN9NORxIND9NqhCPTbQIxz79dne4H9DdTwz035HaMLjmK87PA9MIXw2ZQ6v1xVQj3U49EzzNnMNvPHYYzR/ZfI5uoRq9SwtJD7vQwe98O8E91YKS4F8zxXegauxRtT1YP5h6TPCGn2xtWBj6Dsm1RpbSz8Rdgq/KfsH95M71QAPAAA=
   </data>
  </layer>
- <objectgroup name="floor" width="60" height="16">
+ <objectgroup name="wall" width="60" height="16">
   <object x="515" y="388" width="829" height="4"/>
   <object x="1346" y="294" width="246" height="6"/>
   <object x="1350" y="302" height="80"/>
