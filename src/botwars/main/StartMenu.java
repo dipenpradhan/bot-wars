@@ -123,7 +123,7 @@ public class StartMenu extends Activity implements OnClickListener {
 
 		multiplayerModeDialog.setPositiveButton("WiFi", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
-				Intent openMP_MapMenu_UDP = new Intent(StartMenu.this, MP_MapMenu_UDP.class);
+				Intent openMP_MapMenu_UDP = new Intent(StartMenu.this, MapMenu_UDP.class);
 				startActivity(openMP_MapMenu_UDP);
 				finish();
 				
@@ -132,7 +132,7 @@ public class StartMenu extends Activity implements OnClickListener {
 
 		multiplayerModeDialog.setNegativeButton("Bluetooth", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
-				Intent openMP_MapMenu_BT = new Intent(StartMenu.this, MP_MapMenu_BT.class);
+				Intent openMP_MapMenu_BT = new Intent(StartMenu.this, MapMenu_BT.class);
 				startActivity(openMP_MapMenu_BT);
 				finish();
 				

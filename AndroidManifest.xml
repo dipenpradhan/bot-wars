@@ -31,6 +31,8 @@
                 <category android:name="android.intent.action.DEFAULT" />
             </intent-filter>
         </activity>
+        
+        <!-- 
         <activity android:name=".MP_Client_BotWars_TCP" >
             <intent-filter>
                 <category android:name="android.intent.action.DEFAULT" />
@@ -51,6 +53,7 @@
                 <category android:name="android.intent.action.DEFAULT" />
             </intent-filter>
         </activity>
+        
         <activity android:name=".MP_Server_BotWars_TCP" >
             <intent-filter>
                 <category android:name="android.intent.action.DEFAULT" />
@@ -61,6 +64,19 @@
                 <category android:name="android.intent.action.DEFAULT" />
             </intent-filter>
         </activity>
+        
+        -->
+        <activity android:name=".MultiPlayer_UDP" >
+            <intent-filter>
+                <category android:name="android.intent.action.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Multiplayer_BT" >
+            <intent-filter>
+                <category android:name="android.intent.action.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
         <activity android:name=".StartMenu" >
             <intent-filter>
                 <category android:name="android.intent.action.DEFAULT" />
@@ -68,9 +84,9 @@
         </activity>
         <activity android:name=".MP_MapMenu_TCP" >
         </activity>
-        <activity android:name=".MP_MapMenu_UDP" >
+        <activity android:name=".MapMenu_UDP" >
         </activity>
-        <activity android:name=".MP_MapMenu_BT" >
+        <activity android:name=".MapMenu_BT" >
         </activity>
         
         <activity android:name=".DeviceListActivity"
