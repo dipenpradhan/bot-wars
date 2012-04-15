@@ -200,6 +200,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private static Body player_self_body;
 
 	private ChangeableText mScoreChangeableText;
+	private ChangeableText mRemainingEnemiesChangeableText;
 	private Font mScoreFont;
 	private BitmapTextureAtlas mScoreTextureAtlas;
 	private boolean machineGun = false;
@@ -339,7 +340,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		{
 			enemyLandedArr[i]=true;
 		}
-		
+		remainingEnemies=enemyCount;
 		return mScene;
 	}
 
@@ -372,8 +373,8 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				}
 
 				if ((fix1_name.contains("player_self") && fix2_name.contains("enemy")) || (fix2_name.contains("player_self") && fix1_name.contains("enemy")))
-					isLanded = true;
-
+					{isLanded = true;
+					}
 				if ((fix1_name.contains("enemy") && fix2_name.contains("wall")) || (fix2_name.contains("enemy") && fix1_name.contains("wall"))) {
 					enemyLanded = true;
 
@@ -395,12 +396,22 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				} else
 					reduceHealth = false;
 
+				
+				if (mBulletSprite != null && mEnemySprite != null) {
+					// && pEnemyBody!=null) {
+					if ((fix1_name.contains("bullet_self") && fix2_name.contains("enemy"))
+
+					|| (fix2_name.contains("bullet_self") && fix1_name.contains("enemy"))) {
+						enemyShot = true;}
+				}
+				
+				
 				if (mBulletSprite != null && mEnemySprite != null) {
 					// && pEnemyBody!=null) {
 					if ((fix1_name.contains("bullet") && fix2_name.contains("enemy"))
 
 					|| (fix2_name.contains("bullet") && fix1_name.contains("enemy"))) {
-						enemyShot = true;
+						//enemyShot = true;
 						desEnemy = true;
 						desBull = true;
 
@@ -458,13 +469,15 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				
 				makeBulletsDefyGravity();
 				updateScore();
-				doAICalculations();
-
+				doAICalculations(player_self_body);
+				mRemainingEnemiesChangeableText.setText(remainingEnemies+" Enemies Left");
+				
 				if (desEnemy) {
 					if (fix1_name.contains("enemy"))
-						destroyEnemy(fix1_name);
+						destroyGameObject(fix1_name);
+												
 					if (fix2_name.contains("enemy"))
-						destroyEnemy(fix2_name);
+						destroyGameObject(fix2_name);
 					desEnemy = false;
 				}
 
@@ -473,9 +486,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				if (desBull) {
 
 					if (fix1_name.contains("bullet"))
-						destroyBullet(fix1_name);
+						destroyGameObject(fix1_name);
 					if (fix2_name.contains("bullet"))
-						destroyBullet(fix2_name);
+						destroyGameObject(fix2_name);
 					desBull = false;
 				}
 
@@ -483,7 +496,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				
 				if (machineGun && test % 4 == 0) {
 					test = 1;
-					spawnBullet(player_self_sprite, playerDir);
+					spawnBullet(player_self_sprite, playerDir,"bullet_self");
 				} else if (machineGun && test % 4 != 0)
 					test++;
 
@@ -586,9 +599,18 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		/* The ScoreText showing how many points the player scored. */
 		mScoreChangeableText = new ChangeableText(5, 5, mScoreFont, "Score: 0", "Score: XXXX".length());
 		mScoreChangeableText.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-		mScoreChangeableText.setAlpha(0.5f);
+		mScoreChangeableText.setAlpha(0.9f);
 		mHUD.attachChild(mScoreChangeableText);
+		
+		mRemainingEnemiesChangeableText = new ChangeableText(250, CAMERA_HEIGHT-40, mScoreFont, "x Enemies Left", "xxxx Enemies Left".length());
+		mRemainingEnemiesChangeableText.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		mRemainingEnemiesChangeableText.setAlpha(0.9f);
+		
+		mRemainingEnemiesChangeableText.setScale(0.8f);
+		mHUD.attachChild(mRemainingEnemiesChangeableText);
 
+		
+		
 		Sprite jump = new Sprite(CAMERA_WIDTH - 120, CAMERA_HEIGHT - 175, mJumpTextureRegion) {
 
 			@Override
@@ -619,7 +641,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 				if (pEvent.isActionDown()) {
 					/*
-					 * if (bulletPresent) { destroyBullet();
+					 * if (bulletPresent) { destroyGameObject();
 					 * 
 					 * }
 					 */
@@ -680,11 +702,12 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				});
 
 		this.mDigitalOnScreenControl.getControlBase().setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-		this.mDigitalOnScreenControl.getControlBase().setAlpha(0.9f);
+		this.mDigitalOnScreenControl.getControlBase().setAlpha(0.55f);
 		this.mDigitalOnScreenControl.getControlBase().setScaleCenter(0, 128);
-		this.mDigitalOnScreenControl.getControlBase().setScale(1.50f);
-		this.mDigitalOnScreenControl.getControlKnob().setScale(1.50f);
-		this.mDigitalOnScreenControl.getControlKnob().setAlpha(0.4f);
+		this.mDigitalOnScreenControl.getControlBase().setScale(1.5f);
+		this.mDigitalOnScreenControl.getControlKnob().setAlpha(0.40f);
+		this.mDigitalOnScreenControl.getControlKnob().setScale(0.7f);
+		
 		this.mDigitalOnScreenControl.refreshControlKnobPosition();
 		this.mDigitalOnScreenControl.setAllowDiagonal(false);
 
@@ -858,62 +881,39 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		}
 		return pShape;
 	}
+	public int remainingEnemies;
 	
-	
-	private void destroyEnemy(String enemyName) {
-
-		/*
-		 * for (IEntity pEntity : mEntityList) { if (pEntity.getUserData() !=
-		 * null) { if
-		 * (pEntity.getUserData().toString().equalsIgnoreCase(bodyName)){
-		 * mScene.detachChild(pEntity);
-		 * mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager
-		 * ().findBodyByShape((IShape) pEntity));
-		 * mPhysicsWorld.unregisterPhysicsConnector
-		 * (mPhysicsWorld.getPhysicsConnectorManager
-		 * ().findPhysicsConnectorByShape((IShape) pEntity)); } } }
-		 */
-
-		mScene.detachChild(findShape(enemyName));
-		mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(enemyName)));
-		mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(findShape(enemyName)));
-
-	}
-
-	public void destroyBullet(String bulletName) {
-		/*
-		 * for (IEntity pEntity : mEntityList) { if (pEntity.getUserData() !=
-		 * null) { if
-		 * (pEntity.getUserData().toString().equalsIgnoreCase(bodyName)){
-		 * mScene.detachChild(pEntity);
-		 * 
-		 * mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().
-		 * findBodyByShape((IShape) pEntity));
-		 * mPhysicsWorld.unregisterPhysicsConnector
-		 * (mPhysicsWorld.getPhysicsConnectorManager
-		 * ().findPhysicsConnectorByShape((IShape) pEntity));
-		 * 
-		 * } } }
-		 */
-		mScene.detachChild(findShape(bulletName));
-		mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(bulletName)));
-		mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(findShape(bulletName)));
+	public void destroyGameObject(String name) {
+		
+		if(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(name))!=null)
+		{
+			if(name.contains("enemy"))
+			{
+				remainingEnemies--;
+				Debug.d("remaining enemies   "+remainingEnemies);
+			}
+		mScene.detachChild(findShape(name));
+		mPhysicsWorld.destroyBody(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(name)));
+		mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(findShape(name)));
+		}
 	}
 
 
-	public void spawnBullet(AnimatedSprite _playerSprite, int _playerDir) {
+
+
+	public void spawnBullet(AnimatedSprite _playerSprite, int _playerDir,String bulletName) {
 		bulletCount++;
 		mBulletSprite = new AnimatedSprite(_playerSprite.getX() + _playerDir, _playerSprite.getY() + _playerSprite.getHeight() / 4, mBulletTextureRegion);
 
 		FixtureDef mBulletFixtureDef = PhysicsFactory.createFixtureDef(0, 0f, 0f, false, CATEGORYBIT_BULLET, MASKBITS_BULLET, (short) 0);
 
 		Body mBulletBody = PhysicsFactory.createCircleBody(this.mPhysicsWorld, mBulletSprite, BodyType.DynamicBody, mBulletFixtureDef);
-		mBulletBody.setUserData("bullet" + bulletCount);
+		mBulletBody.setUserData(bulletName + bulletCount);
 
 		mBulletBody.setBullet(true);
 
 		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(mBulletSprite, mBulletBody, true, true));
-		mBulletSprite.setUserData("bullet" + bulletCount);
+		mBulletSprite.setUserData(bulletName + bulletCount);
 		mBulletBody.setLinearVelocity(_playerDir * 20, 0);
 
 		mScene.attachChild(mBulletSprite);
@@ -954,6 +954,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(mEnemySprite, mEnemyBody, true, true));
 		mEnemySprite.setUserData("enemy" + enemyCount);
 		enemyCount++;
+		
 		mScene.attachChild(mEnemySprite);
 		mEnemySprite.animate(100);
 		
@@ -1261,7 +1262,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	}
 	
 	
-	private void doAICalculations()
+	public void doAICalculations(Body _playerBody)
 	{
 		for (int i = 0; i < enemyCount; i++) {
 			IShape temp_enemy_shape = findShape("enemy" + i);
@@ -1269,10 +1270,10 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 			if (temp_enemy_body != null) {
 
-				if (getDistance(player_self_body, temp_enemy_body) < 10.0f && enemyLandedArr[i]) {
+				if (getDistance(_playerBody, temp_enemy_body) < 10.0f && enemyLandedArr[i]) {
 					
 					
-					doAIActions(temp_enemy_body);
+					doAIActions(temp_enemy_body,playerDir,0);
 					
 					enemyLandedArr[i] = false;
 					// testboo=false;
@@ -1292,13 +1293,13 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	}
 	
 	
-	private void doAIActions(Body temp_enemy_body)
+	public void doAIActions(Body temp_enemy_body,int _playerDir, int action)
 	{
 		temp_enemy_body.applyLinearImpulse(0, -5.0f, temp_enemy_body.getPosition().x, temp_enemy_body.getPosition().y);
-		if (playerDir == PLAYER_DIRECTION_RIGHT)
+		if (_playerDir == PLAYER_DIRECTION_RIGHT)
 			temp_enemy_body.setLinearVelocity(-mLinearVelocityX, temp_enemy_body.getLinearVelocity().y);
 
-		if (playerDir == PLAYER_DIRECTION_LEFT)
+		if (_playerDir == PLAYER_DIRECTION_LEFT)
 			temp_enemy_body.setLinearVelocity(mLinearVelocityX, temp_enemy_body.getLinearVelocity().y);
 
 	}
@@ -1362,7 +1363,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	}
 	
 	
-	private void endGame()
+	public void endGame()
 	{
 		mPhysicsWorld.destroyBody(player_self_body);
 		mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(player_self_sprite));

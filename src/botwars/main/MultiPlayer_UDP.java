@@ -37,7 +37,7 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 	private PrintWriter mPrintWriterOUT;
 	
 
-	private boolean isRunning=false;
+	
 
 	
 	private void initUDP()
@@ -63,6 +63,10 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 			mDatagramSocket.receive(mDatagramPacket);
 		} catch (IOException e) {
 			Debug.d("IOException while receiving packet");
+			
+			isRunning=false;
+			mDatagramSocket.close();
+			
 		}
 
 		String msg;
@@ -102,11 +106,18 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 			mDatagramSocket.send(mDatagramPacket);
 		} catch (UnknownHostException e) {
 			Debug.d("Unknown Host");
+			
+			isRunning=false;
+			mDatagramSocket.close();
+			
 		}
 
 		catch (IOException e) {
 			Debug.d("IOException while sending packet");
-
+			
+			isRunning=false;
+			mDatagramSocket.close();
+			
 		}
 	}
 
@@ -118,6 +129,16 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 
 
 	
-	
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+			mDatagramSocket.close();
+			super.onKeyDown(keyCode, event);
+			return true;
+		}
+
+		return super.onKeyDown(keyCode, event);
+	}
 
 }

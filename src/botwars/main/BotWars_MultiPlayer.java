@@ -35,9 +35,9 @@ public class BotWars_MultiPlayer extends BotWars {
 	private static String ipAdd;
 	private OutputStream mOutputStream;
 	private PrintWriter mPrintWriterOUT;
-	
-
-	private boolean isRunning=false;
+	private boolean desPlayerMP=false;
+	private static final int NO_MP_MESSAGE=1;
+	public boolean isRunning=false;
 
 	@Override
 	public Scene onLoadScene() {
@@ -49,7 +49,7 @@ public class BotWars_MultiPlayer extends BotWars {
 		
 		
 		createLocationErrorCorrectionHandler();
-		createBullet_MPHandler();
+		createMPHandler();
 		
 		//mScene.registerUpdateHandler(Bullet_MPHandler);
 
@@ -65,13 +65,6 @@ public class BotWars_MultiPlayer extends BotWars {
 
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		
-		menu.add(0, 4, 0, "Start Game");
-		
-		return super.onCreateOptionsMenu(menu);
-	}
 
 	@Override
 	public void jumpPlayer(Body _playerBody) {
@@ -81,9 +74,9 @@ public class BotWars_MultiPlayer extends BotWars {
 	}
 
 	@Override
-	public void spawnBullet(AnimatedSprite _playerSprite, int _playerDir) {
+	public void spawnBullet(AnimatedSprite _playerSprite, int _playerDir,String bulletName) {
 
-		super.spawnBullet(_playerSprite, _playerDir);
+		super.spawnBullet(_playerSprite, _playerDir, bulletName);
 		if(_playerSprite.getUserData().toString().contains("player_self"))
 		sendMessage("bullet," + _playerDir + ",0");
 
@@ -93,22 +86,7 @@ public class BotWars_MultiPlayer extends BotWars {
 //sendMessage stub
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		if (item.getItemId() == 4) {
-
-			createLocationErrorCorrectionHandler();
-
-			createBullet_MPHandler();
-			//mScene.registerUpdateHandler(Bullet_MPHandler);
-
-			player_mp_sprite = (AnimatedSprite) findShape("player_MP");
-			player_mp_body = super.mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(player_mp_sprite);
-startReceiverThread();
-			
-		}
-		return super.onOptionsItemSelected(item);
-	}
+	
 
 	private boolean isStopped = true;
 
@@ -155,10 +133,24 @@ startReceiverThread();
 
 			@Override
 			public void onTimePassed(TimerHandler pTimerHandler) {
+				if( mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self"))!=null)
+				{
+					sendMessage("location," + mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().x + ","
 				
-				sendMessage("location," + mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().x + ","
 						+ mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_self")).getPosition().y);
-
+				}
+				
+				for(int i=0;i<enemyLandedArr.length;i++)
+				{
+					if(enemyLandedArr[i]&&mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("enemy"+i))!=null)
+					{
+						sendMessage("enemy"+i+","+
+					mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("enemy"+i)).getPosition().x+","+
+					mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("enemy"+i)).getPosition().y);
+						
+					}
+				}
+				
 			}
 		}));
 	}
@@ -167,15 +159,28 @@ startReceiverThread();
 	boolean spawnBullet_MP = false;
 
 	//private IUpdateHandler Bullet_MPHandler;
+private String remEnemyName;
+private boolean remEnemy;
 
-	private void createBullet_MPHandler() {
+	private void createMPHandler() {
 		this.getEngine().registerUpdateHandler(new IUpdateHandler() {
 
 			@Override
 			public void onUpdate(float pSecondsElapsed) {
 				if (spawnBullet_MP) {
-					spawnBullet(player_mp_sprite, playerDir_MP);
+					spawnBullet(player_mp_sprite, playerDir_MP,"bullet_MP");
 					spawnBullet_MP = false;
+				}
+				if(desPlayerMP)
+				{
+					destroyGameObject("player_MP");
+					desPlayerMP=false;
+				}
+				doAICalculations(player_mp_body);
+				
+				if(remEnemy)
+				{
+					destroyGameObject("remove_"+remEnemyName);
 				}
 			}
 
@@ -239,13 +244,40 @@ startReceiverThread();
 		}
 		if (msgArray[0].equalsIgnoreCase("stop")) {
 			stopPlayer(player_mp_sprite, player_mp_body);
-		}}
-	public static void setIPAdd(String ip)
-	{
-		ipAdd=ip;
+		}
+		if (msgArray[0].equalsIgnoreCase("remove")) {
+			desPlayerMP=true;
+		}
+		
+		if(msgArray[0].contains("enemy"))
+		{
+			if(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(msgArray[0]))!=null)
+			mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(msgArray[0])).setTransform(Float.parseFloat(msgArray[1]), Float.parseFloat(msgArray[2]), 0);
+		}
+		if(msgArray[0].equalsIgnoreCase("removeEnemy"))
+		{
+			if(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape(msgArray[1]))!=null)
+			{
+				remEnemy=true;
+				remEnemyName=msgArray[1];
+				
+			}
+		}
+		
 	}
 
-
+	@Override
+	public void endGame()
+	{
+		sendMessage("remove,0,0");
+		super.endGame();
+	}
+	
+	public void endGame(int action)
+	{
+		
+	}
+	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
@@ -262,5 +294,28 @@ startReceiverThread();
 		return super.onKeyDown(keyCode, event);
 	}
 	
+	@Override
+	public void doAIActions(Body temp_enemy_body,int _playerDir, int action)
+	{	
+			super.doAIActions(temp_enemy_body, _playerDir, action);
+	
+	}
+	
+	
+@Override
+public void destroyGameObject(String name) {
 
+if(name.contains("remove_"))
+{
+	name=name.substring(name.indexOf("_")+1, name.length());
+	
+}
+
+	else if(name.contains("enemy"))
+	{
+		sendMessage("removeEnemy,"+name+",0");
+	}
+
+super.destroyGameObject(name);
+}
 }

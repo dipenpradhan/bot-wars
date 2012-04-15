@@ -30,7 +30,7 @@ public class Multiplayer_BT extends BotWars_MultiPlayer {
 	private BufferedReader mBufferedReader; 
 	
 	private static BluetoothSocket mSocket;
-	private boolean isRunning=false;
+	
 
 	
 	private void initBT()
@@ -68,6 +68,8 @@ public class Multiplayer_BT extends BotWars_MultiPlayer {
 			return receivedMessage;
 		} catch (IOException e) {
 			Debug.d("error reading stream");
+			isRunning=false;
+			endGame();
 		}
 
 		return null;

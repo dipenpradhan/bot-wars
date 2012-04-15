@@ -194,7 +194,7 @@ private class ConnectThread extends Thread {
         	Intent i=new Intent(MapMenu_BT.this,Multiplayer_BT.class);
             startActivity(i);
             Debug.d("BLUETOOTH SOCKET CONNECTED");
-
+            finish();
         } catch (IOException connectException) {
             // Unable to connect; close the socket and get out
             try {
@@ -219,23 +219,24 @@ private class ConnectThread extends Thread {
 @Override
 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	
-	if(resultCode==Activity.RESULT_OK)
+	if(resultCode==Activity.RESULT_OK&&data!=null)
 	{	String address=data.getExtras()
 	        .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+		
+	BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
 		
 		mConnectThread=new ConnectThread(device);
 		mConnectThread.start();
 		
 	}
 	
-	super.onActivityResult(requestCode, resultCode, data);
+	//super.onActivityResult(requestCode, resultCode, data);
 }
 
 @Override
 protected void onDestroy() {
-	if(mConnectThread!=null)mConnectThread.cancel();
-	if(mAcceptThread!=null)mAcceptThread.cancel();
+	//if(mConnectThread!=null)mConnectThread.cancel();
+	//if(mAcceptThread!=null)mAcceptThread.cancel();
 	super.onDestroy();
 }
 	

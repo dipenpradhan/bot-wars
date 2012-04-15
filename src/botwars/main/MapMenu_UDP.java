@@ -73,7 +73,7 @@ public class MapMenu_UDP extends MapMenu{
 	private void makeIPDialog() {
 
 
-		Dialog ipDialog = new Dialog(MapMenu_UDP.this);
+		final Dialog ipDialog = new Dialog(MapMenu_UDP.this);
 
 		ipDialog.setContentView(R.layout.ip_dialog);
 		ipDialog.setTitle("Enter IP address");
@@ -94,10 +94,10 @@ public class MapMenu_UDP extends MapMenu{
 				if ((event.getAction() == KeyEvent.ACTION_DOWN)
 						&& (keyCode == KeyEvent.KEYCODE_ENTER)) {
 					// Perform action on key press
-					/*MP_Server_BotWars_UDP.setIPAdd(edtx_ip.getText().toString());
-					Intent openMP_BotWars_UDP = new Intent(MapMenu_UDP.this, MP_Server_BotWars_UDP.class);
-					startActivity(openMP_BotWars_UDP);
-*/MultiPlayer_UDP.setIPAdd(edtx_ip.getText().toString());
+				
+					
+					MultiPlayer_UDP.setIPAdd(edtx_ip.getText().toString());
+					ipDialog.dismiss();
 Intent openMP_BotWars_UDP = new Intent(MapMenu_UDP.this, MultiPlayer_UDP.class);
 startActivity(openMP_BotWars_UDP);
 					finish();
