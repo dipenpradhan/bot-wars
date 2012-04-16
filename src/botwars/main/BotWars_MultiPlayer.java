@@ -13,6 +13,7 @@ import org.anddev.andengine.engine.handler.IUpdateHandler;
 import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.scene.Scene;
+import org.anddev.andengine.entity.scene.popup.TextPopupScene;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.util.Debug;
 
@@ -174,6 +175,7 @@ private boolean remEnemy;
 				if(desPlayerMP)
 				{
 					destroyGameObject("player_MP");
+					TextPopupScene mTextPopupScene = new TextPopupScene(BotWars_MultiPlayer.this.getEngine().getCamera(), BotWars_MultiPlayer.this.getEngine().getScene(), mScoreFont, "PLAYER 2 HAS DIED", 5.0f);
 					desPlayerMP=false;
 				}
 				doAICalculations(player_mp_body);
@@ -205,6 +207,7 @@ private boolean remEnemy;
 					
 					String[] msgArray = new String[2];
 					msgArray = receiveMessage().split(",", 3);
+					
 					//Debug.d("incoming: " + msg);
 					
 					handleReceivedMessage(msgArray);
@@ -270,9 +273,17 @@ private boolean remEnemy;
 	public void endGame()
 	{
 		sendMessage("remove,0,0");
+		isRunning=false;
 		super.endGame();
 	}
 	
+	@Override
+	protected void onDestroy() {
+isRunning=false;
+		super.onDestroy();
+	}
+
+
 	public void endGame(int action)
 	{
 		
@@ -280,7 +291,7 @@ private boolean remEnemy;
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+		if ((keyCode == KeyEvent.KEYCODE_BACK ||keyCode == KeyEvent.KEYCODE_HOME) && event.getRepeatCount() == 0) {
 
 			isRunning=false;
 			Intent openStartMenu = new Intent(BotWars_MultiPlayer.this, StartMenu.class);

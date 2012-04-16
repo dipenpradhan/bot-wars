@@ -39,8 +39,8 @@ UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
 private static final String NAME_SECURE = "BluetoothChatSecure";
 private static final String NAME_INSECURE = "BluetoothChatInsecure";
 
-private AcceptThread mAcceptThread;
-private ConnectThread mConnectThread;
+private static AcceptThread mAcceptThread;
+private static ConnectThread mConnectThread;
 private boolean startGame=false;
 
 
@@ -132,8 +132,9 @@ private class AcceptThread extends Thread {
                 Multiplayer_BT.setBluetoothSocket(socket);
                 
                 Intent i=new Intent(MapMenu_BT.this,Multiplayer_BT.class);
-                startActivity(i);
+                
                 finish();
+                startActivity(i);
             } catch (IOException e) {
                 break;
             }
@@ -192,9 +193,11 @@ private class ConnectThread extends Thread {
         
         	Multiplayer_BT.setBluetoothSocket(mmSocket);
         	Intent i=new Intent(MapMenu_BT.this,Multiplayer_BT.class);
-            startActivity(i);
-            Debug.d("BLUETOOTH SOCKET CONNECTED");
-            finish();
+        	finish();
+        	Debug.d("BLUETOOTH SOCKET CONNECTED");
+        	startActivity(i);
+            
+            
         } catch (IOException connectException) {
             // Unable to connect; close the socket and get out
             try {
@@ -239,5 +242,12 @@ protected void onDestroy() {
 	//if(mAcceptThread!=null)mAcceptThread.cancel();
 	super.onDestroy();
 }
-	
+
+public static void stopBTThread()
+{
+	if(mConnectThread!=null)mConnectThread.cancel();
+	if(mAcceptThread!=null)mAcceptThread.cancel();
+}
+
+
 }

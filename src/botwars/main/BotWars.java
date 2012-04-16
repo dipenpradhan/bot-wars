@@ -11,6 +11,7 @@ import org.anddev.andengine.audio.sound.Sound;
 import org.anddev.andengine.audio.sound.SoundFactory;
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.SmoothCamera;
+import org.anddev.andengine.engine.camera.ZoomCamera;
 import org.anddev.andengine.engine.camera.hud.HUD;
 import org.anddev.andengine.engine.camera.hud.controls.BaseOnScreenControl;
 import org.anddev.andengine.engine.camera.hud.controls.BaseOnScreenControl.IOnScreenControlListener;
@@ -28,7 +29,6 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXObject;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXObjectGroup;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
-import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
@@ -63,7 +63,6 @@ import org.anddev.andengine.util.Debug;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.hardware.SensorManager;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -201,7 +200,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	private ChangeableText mScoreChangeableText;
 	private ChangeableText mRemainingEnemiesChangeableText;
-	private Font mScoreFont;
+	public Font mScoreFont;
 	private BitmapTextureAtlas mScoreTextureAtlas;
 	private boolean machineGun = false;
 
@@ -341,6 +340,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 			enemyLandedArr[i]=true;
 		}
 		remainingEnemies=enemyCount;
+		mCamera.setBoundsEnabled(true);
+		mCamera.setBounds(0, mTMXTiledMap.getTileColumns()*mTMXTiledMap.getTileWidth(), 0, mTMXTiledMap.getTileRows()*mTMXTiledMap.getTileHeight());
+		mCamera.setChaseEntity(player_self_sprite);
 		return mScene;
 	}
 
@@ -509,7 +511,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				}
 			
 				if (!mScrollDetector.isEnabled())
-					mCamera.setCenter(player_self_sprite.getX(), player_self_sprite.getY());
+				{
+					//mCamera.setCenter(player_self_sprite.getX(), player_self_sprite.getY());
+				}
 			}
 
 			@Override
@@ -635,7 +639,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		};
 		jump.setScale(0.70f);
-		Sprite shoot = new Sprite(CAMERA_WIDTH - 200, CAMERA_HEIGHT - 100, mShootTextureRegion) {
+		Sprite shoot = new Sprite(CAMERA_WIDTH - 200, CAMERA_HEIGHT - 110	, mShootTextureRegion) {
 			@Override
 			public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY) {
 
@@ -645,8 +649,12 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 					 * 
 					 * }
 					 */
-					// spawnBullet(player_self_sprite, playerDir);
-					machineGun = true;
+					
+					if(!machineGun)
+						spawnBullet(player_self_sprite, playerDir,"bullet_self");
+					
+					//machineGun = true;
+					
 					mCamera.setZoomFactor(0.80f);
 					isButtonAreaTouched=true;
 				}
