@@ -28,7 +28,6 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXObject;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXObjectGroup;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
-import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
@@ -63,8 +62,8 @@ import org.anddev.andengine.util.Debug;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.hardware.SensorManager;
+import android.os.CountDownTimer;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -131,7 +130,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private TextureRegion mOnScreenControlBaseTextureRegion;
 	private TextureRegion mOnScreenControlKnobTextureRegion;
 	public DigitalOnScreenControl mDigitalOnScreenControl;
-
+	public HUD mHUD;
 	private BitmapTextureAtlas mHUDTextureAtlas; // atlas for HUD textures
 	private TextureRegion mJumpTextureRegion;
 	private TextureRegion mShootTextureRegion;
@@ -152,7 +151,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private AnimatedSprite mPlayerSprite;
 	private AnimatedSprite mBulletSprite;
 
-	private static float mImpulseY = 14f;
+	private static float mImpulseY = 10f;
 	private static float mLinearVelocityX = 8.0f;
 
 	private static String mapName = "tmx/map_1.tmx";
@@ -188,7 +187,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	public ArrayList<IEntity> mEntityList;
 
 	private Rectangle rect;
-	private int enemyCount = 0;
+	public int enemyCount = 0;
 	private int wallCount = 0;
 	
 	private PinchZoomDetector mPinchZoomDetector;
@@ -200,8 +199,9 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	private static Body player_self_body;
 
 	private ChangeableText mScoreChangeableText;
+	private ChangeableText mTimerChangeableText;
 	private ChangeableText mRemainingEnemiesChangeableText;
-	private Font mScoreFont;
+	public Font mScoreFont;
 	private BitmapTextureAtlas mScoreTextureAtlas;
 	private boolean machineGun = false;
 
@@ -341,9 +341,35 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 			enemyLandedArr[i]=true;
 		}
 		remainingEnemies=enemyCount;
+		mCamera.setBoundsEnabled(true);
+		mCamera.setBounds(0, mTMXTiledMap.getTileColumns()*mTMXTiledMap.getTileWidth(), 0, mTMXTiledMap.getTileRows()*mTMXTiledMap.getTileHeight());
+		mCamera.setChaseEntity(player_self_sprite);
+		if(mapID==0)totalTime=120000;
+		if(mapID==1)totalTime=60000;
+		if(mapID==2)totalTime=240000;
+		
+		startCountDownTimer();
 		return mScene;
-	}
+	}private long totalTime;
+	private CountDownTimer mCountDownTimer;
+	private void startCountDownTimer(){
+	mCountDownTimer=new CountDownTimer(totalTime, 1000) {
+		@Override
+	    public void onTick(long millisUntilFinished) {
+	       Debug.d("---------"+timer);
+//	       timer=(int)millisUntilFinished / 1000;
+	    	mTimerChangeableText.setText("Time: " + millisUntilFinished / 1000);
 
+			if(millisUntilFinished / 1000<10)mTimerChangeableText.setColor(255, 0, 0);
+	    }
+		@Override
+	    public void onFinish() {
+	        endGame(1);
+	    }
+	 }.start();
+
+}
+	private int timer=30;
 	private void createCollisionListener() {
 		collisionListener = new ContactListener() {
 
@@ -471,7 +497,11 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				updateScore();
 				doAICalculations(player_self_body);
 				mRemainingEnemiesChangeableText.setText(remainingEnemies+" Enemies Left");
-				
+				//mTimerChangeableText.setText("Timer: "+timer);
+				if(remainingEnemies==0)
+				{
+					endGame(2);
+				}
 				if (desEnemy) {
 					if (fix1_name.contains("enemy"))
 						destroyGameObject(fix1_name);
@@ -503,13 +533,15 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 				updateHealthBar();
 				
 				if (Player_Max_Health <= 0) {
-					endGame();
+					endGame(1);
 					
 
 				}
 			
 				if (!mScrollDetector.isEnabled())
-					mCamera.setCenter(player_self_sprite.getX(), player_self_sprite.getY());
+				{
+					//mCamera.setCenter(player_self_sprite.getX(), player_self_sprite.getY());
+				}
 			}
 
 			@Override
@@ -594,13 +626,20 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	
 	public void initControls() {
 
-		HUD mHUD = new HUD();
+		mHUD = new HUD();
 
 		/* The ScoreText showing how many points the player scored. */
 		mScoreChangeableText = new ChangeableText(5, 5, mScoreFont, "Score: 0", "Score: XXXX".length());
 		mScoreChangeableText.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
 		mScoreChangeableText.setAlpha(0.9f);
 		mHUD.attachChild(mScoreChangeableText);
+		
+		mTimerChangeableText = new ChangeableText(CAMERA_WIDTH-180, 50, mScoreFont, "Time: x", "Time: xxx".length());
+		mTimerChangeableText.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		mTimerChangeableText.setColor(0, 255, 0);
+		mTimerChangeableText.setAlpha(0.9f);
+		mHUD.attachChild(mTimerChangeableText);
+		
 		
 		mRemainingEnemiesChangeableText = new ChangeableText(250, CAMERA_HEIGHT-40, mScoreFont, "x Enemies Left", "xxxx Enemies Left".length());
 		mRemainingEnemiesChangeableText.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
@@ -635,7 +674,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 		};
 		jump.setScale(0.70f);
-		Sprite shoot = new Sprite(CAMERA_WIDTH - 200, CAMERA_HEIGHT - 100, mShootTextureRegion) {
+		Sprite shoot = new Sprite(CAMERA_WIDTH - 200, CAMERA_HEIGHT - 110	, mShootTextureRegion) {
 			@Override
 			public boolean onAreaTouched(TouchEvent pEvent, float pX, float pY) {
 
@@ -645,8 +684,12 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 					 * 
 					 * }
 					 */
-					// spawnBullet(player_self_sprite, playerDir);
-					machineGun = true;
+					
+					if(!machineGun)
+						spawnBullet(player_self_sprite, playerDir,"bullet_self");
+					
+					//machineGun = true;
+					
 					mCamera.setZoomFactor(0.80f);
 					isButtonAreaTouched=true;
 				}
@@ -832,19 +875,19 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	public static void setVelocity(float str) {
 		mLinearVelocityX = str; // Float.parseFloat(str);
 	}
-
-	public static void setMap(int mapID) {
-
-		setScene(mapID);
-		if (mapID == 0) {
+private static int mapID;
+	public static void setMap(int _mapID) {
+		mapID=_mapID;
+		setScene(_mapID);
+		if (_mapID == 0) {
 			mapName = "tmx/map_1.tmx";
 			mapOffset = 20;
 		}
-		if (mapID == 1) {
+		if (_mapID == 1) {
 			mapName = "tmx/map_2.tmx";
 			mapOffset = 20;
 		}
-		if (mapID == 2) {
+		if (_mapID == 2) {
 			mapName = "tmx/map_3.tmx";
 			mapOffset = 100;
 		}
@@ -889,7 +932,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		{
 			if(name.contains("enemy"))
 			{
-				remainingEnemies--;
+				reduceRemainingEnemies();
 				Debug.d("remaining enemies   "+remainingEnemies);
 			}
 		mScene.detachChild(findShape(name));
@@ -1023,6 +1066,21 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		}));
 	}
 
+	
+	/*private void createGameTimeHandler() {
+		final TimerHandler gameTimer;
+
+		this.getEngine().registerUpdateHandler(gameTimer= new TimerHandler(1, true, new ITimerCallback() {
+			@Override
+			public void onTimePassed(final TimerHandler pTimerHandler) {
+					timer--;
+					if(timer<5)mTimerChangeableText.setColor(255, 0, 0);
+			}
+		}));
+	}
+*/
+
+
 	public static void enableMusic(boolean m) {
 		enableMusic = m;
 	}
@@ -1038,11 +1096,12 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-
+/*
 			Intent openStartMenu = new Intent(BotWars.this, StartMenu.class);
 			startActivity(openStartMenu);
 
-			finish();
+			finish();*/
+			endGame(0);
 			// do something on back.
 			return true;
 		}
@@ -1252,7 +1311,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	}
 	
 	
-	private void updateScore()
+	public void updateScore()
 	{
 		if (enemyShot) {
 			mScore += 10;
@@ -1361,19 +1420,47 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 			reduceHealth = false;
 		}
 	}
-	
-	
-	public void endGame()
+	public void reduceRemainingEnemies()
 	{
-		mPhysicsWorld.destroyBody(player_self_body);
-		mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(player_self_sprite));
-		mScene.detachChild(player_self_sprite);
-
-		Intent StartIntent = new Intent(BotWars.this, StartMenu.class);
+		remainingEnemies--;	
+	}
+	
+	public void endGame(int action)
+	{mCountDownTimer.cancel();
+		//mPhysicsWorld.destroyBody(player_self_body);
+		//mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(player_self_sprite));
+		//mScene.detachChild(player_self_sprite);
+		
+		if(action==0)
+		{
+			Intent StartIntent = new Intent(BotWars.this, StartMenu.class);
+			finish();
+			startActivity(StartIntent);	
+		}
+		if(action==1)
+		{
+			Intent StartIntent = new Intent(BotWars.this, GameOver.class);
+		finish();
+		startActivity(StartIntent);
+		}
+		if(action==2)
+		{
+			Intent StartIntent = new Intent(BotWars.this, LevelComplete.class);
+		finish();
+		startActivity(StartIntent);
+		}
+		
+	}
+/*	public void endGame(int action)
+	{if(action==2)
+		{
+		Intent StartIntent = new Intent(BotWars.this, LevelComplete.class);
+		finish();
 		startActivity(StartIntent);
 
-		finish();
-	}
+		}
+	
+	}*/
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================

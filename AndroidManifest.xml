@@ -82,6 +82,16 @@
                 <category android:name="android.intent.action.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name=".GameOver" >
+            <intent-filter>
+                <category android:name="android.intent.action.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".LevelComplete" >
+            <intent-filter>
+                <category android:name="android.intent.action.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".MP_MapMenu_TCP" >
         </activity>
         <activity android:name=".MapMenu_UDP" >

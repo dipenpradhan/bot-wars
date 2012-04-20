@@ -118,23 +118,26 @@ public class StartMenu extends Activity implements OnClickListener {
 	private void makeMultiplayerModeDialog() {
 
 		AlertDialog.Builder multiplayerModeDialog= new AlertDialog.Builder(this);
-
+		
 		multiplayerModeDialog.setMessage("Select Multiplayer Mode");
-
+		
 		multiplayerModeDialog.setPositiveButton("WiFi", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
 				Intent openMP_MapMenu_UDP = new Intent(StartMenu.this, MapMenu_UDP.class);
-				startActivity(openMP_MapMenu_UDP);
 				finish();
+				startActivity(openMP_MapMenu_UDP);
+				
 				
 			}
 		});
 
 		multiplayerModeDialog.setNegativeButton("Bluetooth", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
+				
 				Intent openMP_MapMenu_BT = new Intent(StartMenu.this, MapMenu_BT.class);
-				startActivity(openMP_MapMenu_BT);
 				finish();
+				startActivity(openMP_MapMenu_BT);
+				
 				
 			
 			}

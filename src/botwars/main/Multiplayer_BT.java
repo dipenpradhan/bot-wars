@@ -69,7 +69,7 @@ public class Multiplayer_BT extends BotWars_MultiPlayer {
 		} catch (IOException e) {
 			Debug.d("error reading stream");
 			isRunning=false;
-			endGame();
+			endGame(0);
 		}
 
 		return null;
@@ -93,7 +93,12 @@ public class Multiplayer_BT extends BotWars_MultiPlayer {
 
 
 	}
-
+@Override
+public void endGame(int action)
+{   super.endGame(action);
+	//MapMenu_BT.stopBTThread();
+	
+}
 	@Override
 	public void sendMessage(String str) {
 
