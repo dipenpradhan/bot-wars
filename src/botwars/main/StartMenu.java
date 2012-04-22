@@ -97,8 +97,9 @@ public class StartMenu extends Activity implements OnClickListener {
 
 		AlertDialog.Builder aboutDialog = new AlertDialog.Builder(this);
 
-		aboutDialog.setMessage("This Game has been made by Dipen,Gaurav & Mayuresh");
 
+		aboutDialog.setMessage("http://www.code.google.com/p/bot-wars \n \nThis Game has been made by Dipen,Gaurav & Mayuresh");
+		
 		aboutDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
 				// Toast.makeText(getBaseContext(), "BUY IT",
