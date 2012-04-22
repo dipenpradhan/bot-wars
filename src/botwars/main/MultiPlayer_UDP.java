@@ -129,22 +129,25 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 
 
 	@Override
-	public void endGame()
+	public void endGame(int action)
 	{
 		
-		super.endGame();
+		super.endGame(action);
+		mDatagramSocket.close();
 	}
 	
 	@Override
 	protected void onDestroy() {
-		mDatagramSocket.close();
+		
+		endGame(0);
 		super.onDestroy();
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if ((keyCode == KeyEvent.KEYCODE_BACK ||keyCode == KeyEvent.KEYCODE_HOME) && event.getRepeatCount() == 0) {
-			mDatagramSocket.close();
+		//	mDatagramSocket.close();
+			
 			super.onKeyDown(keyCode, event);
 			return true;
 		}
