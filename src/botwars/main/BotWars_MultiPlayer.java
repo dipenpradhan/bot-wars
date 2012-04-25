@@ -237,8 +237,8 @@ public class BotWars_MultiPlayer extends BotWars {
 
 			public void run() {
 
-				while (isRunning) {
-
+				while (true) {
+if(isRunning){
 					String[] msgArray = new String[2];
 					msgArray = receiveMessage().split(",", 3);
 
@@ -246,6 +246,8 @@ public class BotWars_MultiPlayer extends BotWars {
 
 					handleReceivedMessage(msgArray);
 
+				}
+else break;
 				}
 
 			}
@@ -283,6 +285,7 @@ public class BotWars_MultiPlayer extends BotWars {
 		}
 		if (msgArray[0].equalsIgnoreCase("remove")) {
 			desPlayerMP = true;
+			isRunning=false;
 		}
 
 		if (msgArray[0].contains("enemy")) {
