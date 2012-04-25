@@ -78,12 +78,7 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
 
-/**
- * (c) 2010 Nicolas Gramlich (c) 2011 Zynga
- * 
- * @author Nicolas Gramlich
- * @since 00:06:23 - 11.07.2010
- */
+
 public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListener, IOnSceneTouchListener, IScrollDetectorListener {
 
 	// ===========================================================
@@ -1181,79 +1176,6 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 		mEnemySprite.setCullingEnabled(true);
 	}
 
-	/**********************************************************************************
-	 * 
-	 * Create enemy walking and jumping pattern ////////NOT USED/////////
-	 * 
-	 **********************************************************************************/
-	/*
-	 * private void initCharacters() { for (int i = 1; i <= 20; i++) { //
-	 * spawnEnemy(i); }
-	 * 
-	 * // for(int i=1;i<=10;i++) // {spawnMultiBullet(i);} //
-	 * spawnPlayer("player_MP", mPlayer_MPTextureRegion);
-	 * spawnPlayer("player_self", mPlayerTextureRegion);
-	 * 
-	 * // spawnPlayer("player_MP", mPlayer_MPTextureRegion); }
-	 */
-	private void createEnemyWalkTimeHandler() {
-		final TimerHandler enemyWalkTimerHandler;
-
-		this.getEngine().registerUpdateHandler(enemyWalkTimerHandler = new TimerHandler(2, true, new ITimerCallback() {
-			@Override
-			public void onTimePassed(final TimerHandler pTimerHandler) {
-				jumpDir++;
-				for (IEntity pEnemy : mEntityList) {
-					if (pEnemy.getUserData() != null) {
-						if (pEnemy.getUserData().toString().contains("enemy")) {
-							Body EnemyBody = mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape((IShape) pEnemy);
-							if (EnemyBody != null) {
-								if (jumpDir % 2 == 0) {
-
-									EnemyBody.applyLinearImpulse(0, -7, EnemyBody.getPosition().x, EnemyBody.getPosition().y);
-									EnemyBody.applyLinearImpulse(7, 0, EnemyBody.getPosition().x, EnemyBody.getPosition().y);
-
-									// EnemyBody.setLinearVelocity(
-									// mLinearVelocityX, 0);
-									// Debug.d("right jump");
-
-								}
-								if (jumpDir % 2 != 0) {
-									EnemyBody.applyLinearImpulse(0, -7, EnemyBody.getPosition().x, EnemyBody.getPosition().y);
-									EnemyBody.applyLinearImpulse(-7, 0, EnemyBody.getPosition().x, EnemyBody.getPosition().y);
-
-									//
-									// EnemyBody.setLinearVelocity(
-									// -mLinearVelocityX, 0);
-									// Debug.d("left jump");
-
-								}
-
-							}
-
-						}
-					}
-				}
-				// Random Position Generator
-				// final float xPos = MathUtils.random(30.0f,
-				// (CAMERA_WIDTH - 30.0f));
-				// final float yPos = MathUtils.random(30.0f,
-				// (CAMERA_HEIGHT - 30.0f));
-
-				// createSprite(xPos, yPos);
-			}
-		}));
-	}
-
-	/*
-	 * private void createGameTimeHandler() { final TimerHandler gameTimer;
-	 * 
-	 * this.getEngine().registerUpdateHandler(gameTimer= new TimerHandler(1,
-	 * true, new ITimerCallback() {
-	 * 
-	 * @Override public void onTimePassed(final TimerHandler pTimerHandler) {
-	 * timer--; if(timer<5)mTimerChangeableText.setColor(255, 0, 0); } })); }
-	 */
 
 	/**********************************************************************************
 	 * 
@@ -1365,7 +1287,7 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 
 	@Override
 	public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-		// if(!isButtonAreaTouched&&pTouchEvent.getX()<CAMERA_WIDTH-200-110&&pTouchEvent.getX()>CAMERA_WIDTH+200&&pTouchEvent.getY()<CAMERA_HEIGHT-100-185&&pTouchEvent.getY()>CAMERA_HEIGHT+200)
+		
 		if (!isButtonAreaTouched && pZoomFactor > 0.4f && mPinchZoomStartedCameraZoomFactor > 0.4f) {
 			this.mCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
 		}
