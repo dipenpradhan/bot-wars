@@ -55,7 +55,7 @@ public class BotWars_MultiPlayer extends BotWars {
 		player_mp_body = super.mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(player_mp_sprite);
 		startReceiverThread();
 
-		mTeamScoreChangeableText = new ChangeableText(5, 35, mScoreFont, "Team: 0", "Team: XXXX".length());
+		mTeamScoreChangeableText = new ChangeableText(5, 35, mScoreFont, "Team: 0", "Player 2 is dead".length());
 		mTeamScoreChangeableText.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
 		mTeamScoreChangeableText.setAlpha(0.9f);
 		mHUD.attachChild(mTeamScoreChangeableText);
@@ -203,11 +203,19 @@ public class BotWars_MultiPlayer extends BotWars {
 					spawnBullet_MP = false;
 				}
 				if (desPlayerMP) {
+					if(mPhysicsWorld.getPhysicsConnectorManager().findBodyByShape(findShape("player_MP"))!=null)
 					destroyGameObject("player_MP");
-					TextPopupScene mTextPopupScene = new TextPopupScene(BotWars_MultiPlayer.this.getEngine().getCamera(), mScene.getChildScene(), mScoreFont,
-							"PLAYER 2 HAS DIED", 5.0f);
+					
+					//TextPopupScene mTextPopupScene = new TextPopupScene(BotWars_MultiPlayer.this.getEngine().getCamera(), mScene.getChildScene(), mScoreFont,
+						//	"PLAYER 2 HAS DIED", 2.0f);
 					// mScene.setChildScene(mDigitalOnScreenControl);
-					desPlayerMP = false;
+					mTeamScoreChangeableText.setColor(255, 0, 0);
+					mTeamScoreChangeableText.setText("Player 2 is dead");
+					//desPlayerMP = false;
+				}
+				else
+				{
+					mTeamScoreChangeableText.setText("Team: " + mTeamScore);		
 				}
 				doAICalculations(player_mp_body);
 
@@ -215,7 +223,7 @@ public class BotWars_MultiPlayer extends BotWars {
 				if (removeEnemy) {
 					destroyGameObject("remove_" + removeEnemyName);
 				}
-				mTeamScoreChangeableText.setText("Team: " + mTeamScore);
+			
 			}
 
 			@Override

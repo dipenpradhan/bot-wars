@@ -149,12 +149,7 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 		mDatagramSocket.close();
 	}
 	
-	@Override
-	protected void onDestroy() {
-		
-		endGame(0);
-		super.onDestroy();
-	}
+
 	/**********************************************************************************
 	 * 
 	 * Define behaviour of hardware keys
