@@ -5,26 +5,24 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import org.anddev.andengine.entity.scene.Scene;
-import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.util.Debug;
 
 import android.bluetooth.BluetoothSocket;
 import android.widget.Toast;
 
-import com.badlogic.gdx.physics.box2d.Body;
+
+/**********************************************************************************
+ * 
+ * Inherit from superclass BotWars_Multiplayer and add Bluetooth specific implementation
+ * 
+ **********************************************************************************/
 
 public class Multiplayer_BT extends BotWars_MultiPlayer {
 
-	private DatagramSocket mDatagramSocket;
-	private AnimatedSprite player_mp_sprite;
-	private Body player_mp_body;
-	private static String ipAdd;
+
 	private OutputStream mOutputStream;
 	private PrintWriter mPrintWriterOUT;
 	private BufferedReader mBufferedReader; 
@@ -32,7 +30,11 @@ public class Multiplayer_BT extends BotWars_MultiPlayer {
 	private static BluetoothSocket mSocket;
 	
 
-	
+	/**********************************************************************************
+	 * 
+	 * obtain input and output streams of BluetoothSocket
+	 * 
+	 **********************************************************************************/
 	private void initBT()
 	{
 	
@@ -53,9 +55,46 @@ public class Multiplayer_BT extends BotWars_MultiPlayer {
 		
 		 
 	}
+
+	/**********************************************************************************
+	 * 
+	 * initialize bluetooth socket, streams, reader and writer in onLoadScene
+	 * 
+	 **********************************************************************************/
+	
+	@Override
+	public Scene onLoadScene() {
+
+		initBT();
+		
+		super.onLoadScene();
+		return super.mScene;
+		
+
+
+	}
+
+	/**********************************************************************************
+	 * 
+	 * Override endGame method from superclass BotWars
+	 * Add mechanism to close socket and stop receiving thread 
+	 * 
+	 **********************************************************************************/
+	@Override
+public void endGame(int action)
+{   super.endGame(action);
+	//MapMenu_BT.stopBTThread();
+	
+}
 	
 	
 	
+	/**********************************************************************************
+	 * 
+	 * Override receiveMessage method from superclass BotWars_MultiPlayer 
+	 * Add mechanism to read from inputStream of socket and return incoming message
+	 * 
+	 **********************************************************************************/
 	@Override
 	public String receiveMessage()
 	{
@@ -75,30 +114,13 @@ public class Multiplayer_BT extends BotWars_MultiPlayer {
 		return null;
 		
 	}
+	/**********************************************************************************
+	 * 
+	 * Override sendMessage method from superclass BotWars_MultiPlayer 
+	 * Add mechanism to write given String to outputStream
+	 * 
+	 **********************************************************************************/
 	
-	
-	@Override
-	public Scene onLoadScene() {
-
-
-		initBT();
-		
-		super.onLoadScene();
-
-		
-		
-		
-		return super.mScene;
-		
-
-
-	}
-@Override
-public void endGame(int action)
-{   super.endGame(action);
-	//MapMenu_BT.stopBTThread();
-	
-}
 	@Override
 	public void sendMessage(String str) {
 
@@ -106,6 +128,11 @@ public void endGame(int action)
 		mPrintWriterOUT.flush();
 	}
 
+	/**********************************************************************************
+	 * 
+	 * Method for other classes to pass BluetoothSocket
+	 * 
+	 **********************************************************************************/
 	
 	public static void setBluetoothSocket(BluetoothSocket _BTSocket)
 	{

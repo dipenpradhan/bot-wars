@@ -1,45 +1,37 @@
 package botwars.main;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-import org.anddev.andengine.engine.handler.IUpdateHandler;
-import org.anddev.andengine.engine.handler.timer.ITimerCallback;
-import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.scene.Scene;
-import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.util.Debug;
 
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.badlogic.gdx.physics.box2d.Body;
+/**********************************************************************************
+ * 
+ * Inherit from superclass BotWars_MultiPlayer and add network specific implementation using UDP packets
+ * 
+ **********************************************************************************/
 
 public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 
 	private DatagramSocket mDatagramSocket;
-	private AnimatedSprite player_mp_sprite;
-	private Body player_mp_body;
 	private static String ipAdd;
-	private OutputStream mOutputStream;
-	private PrintWriter mPrintWriterOUT;
-	
+
 
 	
 
-	
+	/**********************************************************************************
+	 * 
+	 * Create a datagram socket on port 50000
+	 * 
+	 **********************************************************************************/
 	private void initUDP()
 	{
 
@@ -52,6 +44,12 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 	}
 	
 	
+	/**********************************************************************************
+	 * 
+	 * Override receiveMessage method from superclass BotWars_MultiPlayer 
+	 * Add mechanism to receive UDP packets and obtain the String contained in them
+	 * 
+	 **********************************************************************************/
 	
 	@Override
 	public String receiveMessage()
@@ -69,7 +67,7 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 			
 		}
 
-		String msg;
+
 
 		String receivedMessage = new String(mDatagramPacket.getData());
 
@@ -77,24 +75,29 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 		return receivedMessage;
 	}
 	
+	/**********************************************************************************
+	 * 
+	 * initialize datagram socket on port 50000
+	 * 
+	 **********************************************************************************/
 	
 	@Override
 	public Scene onLoadScene() {
 
-
 		initUDP();
 		
 		super.onLoadScene();
-
-		
-		
-		
+	
 		return super.mScene;
-		
-
 
 	}
-
+	/**********************************************************************************
+	 * 
+	 * Override sendMessage method from superclass BotWars_MultiPlayer 
+	 * Add mechanism to create a UDP packet containing given string and send it to given IP address on port 50000
+	 * 
+	 **********************************************************************************/
+	
 	@Override
 	public void sendMessage(String str) {
 
@@ -121,13 +124,23 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 		}
 	}
 
+	/**********************************************************************************
+	 * 
+	 * Method for other classes to set IP address of player 2
+	 * 
+	 **********************************************************************************/
 	
 	public static void setIPAdd(String ip)
 	{
 		ipAdd=ip;
 	}
 
-
+	/**********************************************************************************
+	 * 
+	 * Override endGame method from superclass BotWars 
+	 * Add mechanism to close datagram socket
+	 * 
+	 **********************************************************************************/
 	@Override
 	public void endGame(int action)
 	{
@@ -142,7 +155,12 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 		endGame(0);
 		super.onDestroy();
 	}
-
+	/**********************************************************************************
+	 * 
+	 * Define behaviour of hardware keys
+	 * Close socket if back key or home key is pressed
+	 * 
+	 **********************************************************************************/
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if ((keyCode == KeyEvent.KEYCODE_BACK ||keyCode == KeyEvent.KEYCODE_HOME) && event.getRepeatCount() == 0) {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.anddev.andengine.util.Debug;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -19,6 +20,13 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 import android.widget.Toast;
 
+/**********************************************************************************
+ * 
+ * Inherit from superclass MapMenu and add mechanism to search for bluetooth devices, and establish an RFCOMM socket
+ * This socket is passed to MultiPlayer_BT
+ * 
+ **********************************************************************************/
+
 public class MapMenu_BT extends MapMenu{
 private BluetoothAdapter mBluetoothAdapter;
 
@@ -28,20 +36,16 @@ private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
 private static final int REQUEST_ENABLE_BT = 3;
 
 // Unique UUID for this application
-private static final UUID MY_UUID_SECURE =
-    UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
 private static final UUID MY_UUID_INSECURE =
     UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
-private static final UUID MY_UUID =
-UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
 
 //Name for the SDP record when creating server socket
-private static final String NAME_SECURE = "BluetoothChatSecure";
-private static final String NAME_INSECURE = "BluetoothChatInsecure";
+
+private static final String NAME_INSECURE = "BotWarsBluetoothInsecure";
 
 private static AcceptThread mAcceptThread;
 private static ConnectThread mConnectThread;
-private boolean startGame=false;
+
 
 
 	@Override
@@ -107,6 +111,42 @@ private boolean startGame=false;
 	
 	
 	
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	
+	if(resultCode==Activity.RESULT_OK&&data!=null)
+	{	String address=data.getExtras()
+	        .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+		
+	BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+		
+		mConnectThread=new ConnectThread(device);
+		mConnectThread.start();
+		
+	}
+	
+	//super.onActivityResult(requestCode, resultCode, data);
+}
+
+@Override
+protected void onDestroy() {
+	//if(mConnectThread!=null)mConnectThread.cancel();
+	//if(mAcceptThread!=null)mAcceptThread.cancel();
+	super.onDestroy();
+}
+
+public static void stopBTThread()
+{
+	if(mConnectThread!=null)mConnectThread.cancel();
+	if(mAcceptThread!=null)mAcceptThread.cancel();
+}
+
+/**********************************************************************************
+ * 
+ * Inner class AcceptThread
+ * Creates a thread which listens for incoming connection and passes socket to class Multiplayer_BT when socket connection is established
+ * 
+ **********************************************************************************/
 
 private class AcceptThread extends Thread {
     private final BluetoothServerSocket mmServerSocket;
@@ -161,7 +201,13 @@ private class AcceptThread extends Thread {
     }
 }
 	
-	
+/**********************************************************************************
+ * 
+ * Inner class ConnectThread
+ * Creates a thread which attempts to connect to another device and passes socket to Multiplayer_BT when socket connection is established
+ * 
+ **********************************************************************************/
+
 private class ConnectThread extends Thread {
     private final BluetoothSocket mmSocket;
     private final BluetoothDevice mmDevice;
@@ -175,7 +221,7 @@ private class ConnectThread extends Thread {
         // Get a BluetoothSocket to connect with the given BluetoothDevice
         try {
             // MY_UUID is the app's UUID string, also used by the server code
-            tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+            tmp = device.createRfcommSocketToServiceRecord(MY_UUID_INSECURE);
         } catch (IOException e) { }
         mmSocket = tmp;
     }
@@ -218,36 +264,6 @@ private class ConnectThread extends Thread {
     }
 }
 
-
-@Override
-protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-	
-	if(resultCode==Activity.RESULT_OK&&data!=null)
-	{	String address=data.getExtras()
-	        .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-		
-	BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-		
-		mConnectThread=new ConnectThread(device);
-		mConnectThread.start();
-		
-	}
-	
-	//super.onActivityResult(requestCode, resultCode, data);
-}
-
-@Override
-protected void onDestroy() {
-	//if(mConnectThread!=null)mConnectThread.cancel();
-	//if(mAcceptThread!=null)mAcceptThread.cancel();
-	super.onDestroy();
-}
-
-public static void stopBTThread()
-{
-	if(mConnectThread!=null)mConnectThread.cancel();
-	if(mAcceptThread!=null)mAcceptThread.cancel();
-}
 
 
 }

@@ -6,14 +6,28 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
-import android.widget.Toast;
+
+/**********************************************************************************
+ * 
+ * Start Menu activity
+ * 
+ **********************************************************************************/
 
 public class StartMenu extends Activity implements OnClickListener {
-	/** Called when the activity is first created. */
 	public static boolean settingsChanged = false;
+
+	@Override
+	protected void onDestroy() {
+		
+		super.onDestroy();
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -70,22 +84,21 @@ public class StartMenu extends Activity implements OnClickListener {
 			startActivity(openMapsMenu);
 			finish();
 			break;
-		case R.id.txv_quick:
-			// Toast.makeText(getBaseContext(), "Feature under construction",
-			// Toast.LENGTH_LONG).show();
-		
-			makeMultiplayerModeDialog();
 			
-			//finish();
+		case R.id.txv_quick:
+			makeMultiplayerModeDialog();			
 			break;
+			
 		case R.id.txv_settings:
 			Intent openSettingsMenu = new Intent(this, SettingsMenu.class);
 			startActivity(openSettingsMenu);
 			finish();
 			break;
+			
 		case R.id.txv_about:
 			makeAboutDialog();
 			break;
+			
 		case R.id.txv_exit:
 			finish();
 			break;
@@ -94,25 +107,27 @@ public class StartMenu extends Activity implements OnClickListener {
 	}
 
 	private void makeAboutDialog() {
+		 // Linkify the message
+	    final SpannableString strAbout = new SpannableString("http://www.code.google.com/p/bot-wars \n \nThis Game has been made by Dipen,Gaurav & Mayuresh");
+	    Linkify.addLinks(strAbout, Linkify.ALL);
 
-		AlertDialog.Builder aboutDialog = new AlertDialog.Builder(this);
 
+		AlertDialog.Builder aboutDialogBuilder = new AlertDialog.Builder(this);
 
-		aboutDialog.setMessage("http://www.code.google.com/p/bot-wars \n \nThis Game has been made by Dipen,Gaurav & Mayuresh");
+		aboutDialogBuilder.setMessage(strAbout);//"http://www.code.google.com/p/bot-wars \n \nThis Game has been made by Dipen,Gaurav & Mayuresh");
 		
-		aboutDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+		aboutDialogBuilder.setPositiveButton("Close", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
-				// Toast.makeText(getBaseContext(), "BUY IT",
-				// Toast.LENGTH_LONG).show();
+
 			}
 		});
-
-		aboutDialog.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface arg0, int arg1) {
-			}
-		});
-
+		
+		AlertDialog aboutDialog=aboutDialogBuilder.create();
+		
 		aboutDialog.show();
+
+	    // Make the textview clickable. Must be called after show()
+	    ((TextView)aboutDialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
 	}
 
 	
@@ -127,8 +142,7 @@ public class StartMenu extends Activity implements OnClickListener {
 				Intent openMP_MapMenu_UDP = new Intent(StartMenu.this, MapMenu_UDP.class);
 				finish();
 				startActivity(openMP_MapMenu_UDP);
-				
-				
+			
 			}
 		});
 
@@ -138,9 +152,7 @@ public class StartMenu extends Activity implements OnClickListener {
 				Intent openMP_MapMenu_BT = new Intent(StartMenu.this, MapMenu_BT.class);
 				finish();
 				startActivity(openMP_MapMenu_BT);
-				
-				
-			
+		
 			}
 		});
 
@@ -155,5 +167,22 @@ public class StartMenu extends Activity implements OnClickListener {
 	// R.layout.anim);
 	// Now Set your animation
 	// imageView.startAnimation(fadeInAnimation );
+	private class MenuTextTouchListener implements View.OnTouchListener 
+	{     
+	    public boolean onTouch(View view, MotionEvent motionEvent) {
+	    
+		    switch(motionEvent.getAction()){            
+	            case MotionEvent.ACTION_DOWN:
+	             ((TextView) view).setTextColor(0xFF6A5ceD); 
+	                break;          
+	            case MotionEvent.ACTION_CANCEL:             
+	            case MotionEvent.ACTION_UP:
+	            ((TextView) view).setTextColor(0xF9f9f9f9);
+	                break;
+		    } 
+	     
+	        return false;   
+	    } 
+	}
 
 }

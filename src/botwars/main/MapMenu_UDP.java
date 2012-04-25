@@ -5,24 +5,25 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-import botwars.main.MapMenu.ImageAdapter;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.text.Selection;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
+
+/**********************************************************************************
+ * 
+ * Inherit from superclass MapMenu and add dialog to enter IP address
+ * This IP address is passed to MultiPlayer_UDP
+ * 
+ **********************************************************************************/
 
 public class MapMenu_UDP extends MapMenu{
 
@@ -41,10 +42,7 @@ public class MapMenu_UDP extends MapMenu{
 	       {
 	        BotWars.setMap(position);
 	        makeIPDialog();
-	        /*Intent StartIntent = new Intent(MP_MapMenu_TCP.this, BotWars.class);
-			startActivity(StartIntent);
-			finish();
-	        */
+
 	       }
 	        else Toast.makeText(getBaseContext(),
 	               "Map Not Available",
