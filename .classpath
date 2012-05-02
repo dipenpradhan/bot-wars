@@ -3,9 +3,9 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry kind="lib" path="lib/andenginephysicsbox2dextension.jar"/>
-	<classpathentry kind="lib" path="lib/multitouch.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/andenginephysicsbox2dextension.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/multitouch.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="lib" path="lib/andengine.jar" sourcepath="/media/342A63242A62E1FA/Progs/Eclipse/og_andengine.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/andengine.jar" sourcepath="/media/342A63242A62E1FA/Progs/Eclipse/og_andengine.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

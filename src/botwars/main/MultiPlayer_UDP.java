@@ -29,14 +29,14 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 
 	/**********************************************************************************
 	 * 
-	 * Create a datagram socket on port 50000
+	 * Create a datagram socket on port 5000
 	 * 
 	 **********************************************************************************/
 	private void initUDP()
 	{
 
 		try {
-			mDatagramSocket = new DatagramSocket(50000);
+			mDatagramSocket = new DatagramSocket(5000);
 		} catch (SocketException e) {
 			Toast.makeText(MultiPlayer_UDP.this, "Error Creating Socket", 100).show();
 			Debug.d("Error Creating Socket");
@@ -77,7 +77,7 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 	
 	/**********************************************************************************
 	 * 
-	 * initialize datagram socket on port 50000
+	 * initialize datagram socket on port 5000
 	 * 
 	 **********************************************************************************/
 	
@@ -104,7 +104,7 @@ public class MultiPlayer_UDP extends BotWars_MultiPlayer {
 		DatagramPacket mDatagramPacket;
 		try {
 
-			mDatagramPacket = new DatagramPacket(str.trim().getBytes(), 0, str.trim().getBytes().length, InetAddress.getByName(ipAdd), 50000);
+			mDatagramPacket = new DatagramPacket(str.trim().getBytes(), 0, str.trim().getBytes().length, InetAddress.getByName(ipAdd), 5000);
 
 			mDatagramSocket.send(mDatagramPacket);
 		} catch (UnknownHostException e) {

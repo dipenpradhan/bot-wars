@@ -15,7 +15,6 @@
             android:id="@+id/edtx_ip"
             android:layout_width="400dp"
             android:layout_height="wrap_content"
-            
-            android:inputType="number" />
+            />
         
 </LinearLayout>

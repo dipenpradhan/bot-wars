@@ -140,7 +140,7 @@ public class StartMenu extends Activity implements OnClickListener {
 		
 		multiplayerModeDialog.setMessage("Select Multiplayer Mode");
 		
-		multiplayerModeDialog.setPositiveButton("WiFi", new DialogInterface.OnClickListener() {
+		multiplayerModeDialog.setPositiveButton("Internet", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface arg0, int arg1) {
 				Intent openMP_MapMenu_UDP = new Intent(StartMenu.this, MapMenu_UDP.class);
 				finish();

@@ -74,7 +74,7 @@ public class MapMenu_UDP extends MapMenu{
 		final Dialog ipDialog = new Dialog(MapMenu_UDP.this);
 
 		ipDialog.setContentView(R.layout.ip_dialog);
-		ipDialog.setTitle("Enter IP address");
+		ipDialog.setTitle("Enter IP address of player 2");
 		
 		final EditText edtx_ip = (EditText) ipDialog.findViewById(R.id.edtx_ip);
 		edtx_ip.setText(getLocalIpAddress());
