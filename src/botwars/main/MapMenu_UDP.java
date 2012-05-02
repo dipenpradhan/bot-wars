@@ -16,6 +16,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**********************************************************************************
@@ -74,21 +75,26 @@ public class MapMenu_UDP extends MapMenu{
 		final Dialog ipDialog = new Dialog(MapMenu_UDP.this);
 
 		ipDialog.setContentView(R.layout.ip_dialog);
-		ipDialog.setTitle("Enter IP address of player 2");
+		ipDialog.setTitle("Your IP address is: "+getLocalIpAddress());
 		
 		final EditText edtx_ip = (EditText) ipDialog.findViewById(R.id.edtx_ip);
-		edtx_ip.setText(getLocalIpAddress());
-		edtx_ip.setSelection(edtx_ip.getText().length());
+
+		edtx_ip.setHint("Enter IP Address of Player 2");
+		
+		
+		//edtx_ip.setText(getLocalIpAddress());
+		//edtx_ip.setSelection(edtx_ip.getText().length());
 		
 		ImageView img_lan = (ImageView) ipDialog.findViewById(R.id.img_lan);
 		img_lan.setImageResource(R.drawable.mp_icon);
 		ipDialog.show();
 		
-		
-		edtx_ip.setOnKeyListener(new OnKeyListener() {
+				edtx_ip.setOnKeyListener(new OnKeyListener() {
 
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				
+				
 				if ((event.getAction() == KeyEvent.ACTION_DOWN)
 						&& (keyCode == KeyEvent.KEYCODE_ENTER)) {
 					// Perform action on key press
