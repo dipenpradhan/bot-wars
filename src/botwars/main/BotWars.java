@@ -1217,8 +1217,8 @@ public class BotWars extends BaseGameActivity implements IPinchZoomDetectorListe
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 
 		// if back button is pressed, end game and show start menu
-		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-
+		if (keyCode == KeyEvent.KEYCODE_BACK ){//&&  event.getRepeatCount() == 0) {
+			
 			endGame(SHOW_START_MENU_ACTIVITY);
 
 			return true;

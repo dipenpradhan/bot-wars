@@ -3,6 +3,7 @@ package botwars.main;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ public class SettingsMenu extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
+		setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.settingsmenu);
 
